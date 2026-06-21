@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laptop Gallery — Wholesale Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ LOADING SCREEN ============ -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="loading-logo">
+    <i data-icon="device-laptop"></i>
+  </div>
+  <p class="loading-text">Laptop Gallery</p>
+</div>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <i data-icon="device-laptop"></i>
+    </div>
+    <h1 class="auth-title">Laptop Gallery</h1>
+    <p class="auth-subtitle">Wholesale stock &amp; cash manager</p>
+
+    <form id="loginForm" class="auth-form">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="aapka@email.com" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <p id="loginError" class="form-error hidden"></p>
+      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+        <span>Login</span>
+      </button>
+    </form>
+
+    <button id="showSignupBtn" class="link-btn">Naya account chahiye? Sign up karein</button>
+  </div>
+</div>
+
+<!-- ============ SIGNUP SCREEN ============ -->
+<div id="signupScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <i data-icon="device-laptop"></i>
+    </div>
+    <h1 class="auth-title">Account banayein</h1>
+    <p class="auth-subtitle">Sign up ke baad admin approval chahiye hoga</p>
+
+    <form id="signupForm" class="auth-form">
+      <div class="field">
+        <label for="signupName">Pura naam</label>
+        <input type="text" id="signupName" placeholder="Aapka naam" required>
+      </div>
+      <div class="field">
+        <label for="signupEmail">Email</label>
+        <input type="email" id="signupEmail" placeholder="aapka@email.com" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="signupPassword">Password</label>
+        <input type="password" id="signupPassword" placeholder="Kam se kam 6 characters" required autocomplete="new-password">
+      </div>
+      <p id="signupError" class="form-error hidden"></p>
+      <button type="submit" class="btn btn-primary btn-block" id="signupBtn">
+        <span>Sign up karein</span>
+      </button>
+    </form>
+
+    <button id="showLoginBtn" class="link-btn">Pehle se account hai? Login karein</button>
+  </div>
+</div>
+
+<!-- ============ PENDING APPROVAL SCREEN ============ -->
+<div id="pendingScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="auth-logo pending">
+      <i data-icon="clock-hour-4"></i>
+    </div>
+    <h1 class="auth-title">Approval ka intezaar</h1>
+    <p class="auth-subtitle">Aapka account ban gaya hai. Admin jab approve karenge, aap login kar paayenge.</p>
+    <button id="pendingLogoutBtn" class="btn btn-secondary btn-block">Logout</button>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="appShell" class="app-shell hidden">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="brand">
+        <div class="brand-icon"><i data-icon="device-laptop"></i></div>
+        <span class="brand-name">Laptop Gallery</span>
+      </div>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Menu band karein"><i data-icon="x"></i></button>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-page="dashboard">
+        <i data-icon="layout-dashboard"></i><span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-page="inventory">
+        <i data-icon="device-laptop"></i><span>Inventory</span>
+      </button>
+      <button class="nav-item" data-page="addLaptop">
+        <i data-icon="plus"></i><span>Naya laptop add karein</span>
+      </button>
+      <button class="nav-item" data-page="cashLedger">
+        <i data-icon="cash"></i><span>Cash ledger</span>
+      </button>
+      <button class="nav-item" data-page="reports">
+        <i data-icon="chart-bar"></i><span>Reports</span>
+      </button>
+      <button class="nav-item admin-only hidden" data-page="users">
+        <i data-icon="users"></i><span>Users manage karein</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div class="user-info">
+          <p class="user-name" id="sidebarUserName">User</p>
+          <p class="user-role" id="sidebarUserRole">Staff</p>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-block" id="logoutBtn">
+        <i data-icon="logout"></i><span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main content -->
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Menu kholein"><i data-icon="menu-2"></i></button>
+      <h1 class="page-title" id="pageTitle">Dashboard</h1>
+      <div class="topbar-right">
+        <span class="sync-badge" id="syncBadge"><i data-icon="circle-filled"></i> Live</span>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+
+      <!-- ===== DASHBOARD PAGE ===== -->
+      <section class="page" id="page-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon c-blue"><i data-icon="device-laptop"></i></div>
+            <div>
+              <p class="stat-label">Stock me</p>
+              <p class="stat-value" id="statInStock">0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-teal"><i data-icon="checks"></i></div>
+            <div>
+              <p class="stat-label">Total bik chuke</p>
+              <p class="stat-value" id="statSold">0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-green"><i data-icon="cash"></i></div>
+            <div>
+              <p class="stat-label">Cash in (mahina)</p>
+              <p class="stat-value" id="statCashIn">Rs 0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-amber"><i data-icon="trending-up"></i></div>
+            <div>
+              <p class="stat-label">Profit (mahina)</p>
+              <p class="stat-value" id="statProfit">Rs 0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Recent entries</h2>
+            <button class="btn btn-ghost btn-sm" data-goto="inventory">Sab dekhein <i data-icon="arrow-right"></i></button>
+          </div>
+          <div class="list" id="recentList">
+            <p class="empty-state">Koi entry nahi hai abhi</p>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="btn btn-primary" data-goto="addLaptop"><i data-icon="plus"></i> Naya laptop</button>
+          <button class="btn btn-secondary" data-goto="cashLedger"><i data-icon="receipt"></i> Cash entry</button>
+        </div>
+      </section>
+
+      <!-- ===== INVENTORY PAGE ===== -->
+      <section class="page hidden" id="page-inventory">
+        <div class="toolbar">
+          <div class="search-box">
+            <i data-icon="search"></i>
+            <input type="text" id="inventorySearch" placeholder="Brand, model ya serial no. search karein">
+          </div>
+          <select id="inventoryFilter" class="select-input">
+            <option value="all">Sab dikhayein</option>
+            <option value="in_stock">Stock me</option>
+            <option value="sold">Sold</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table" id="inventoryTable">
+            <thead>
+              <tr>
+                <th>Laptop</th>
+                <th>Serial no.</th>
+                <th>Buy date</th>
+                <th>Buy price</th>
+                <th>Status</th>
+                <th>Sell price</th>
+                <th>Profit</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTableBody">
+            </tbody>
+          </table>
+          <p class="empty-state hidden" id="inventoryEmpty">Koi laptop nahi mila</p>
+        </div>
+      </section>
+
+      <!-- ===== ADD LAPTOP PAGE ===== -->
+      <section class="page hidden" id="page-addLaptop">
+        <div class="panel form-panel">
+          <h2 id="laptopFormTitle">Naya laptop add karein</h2>
+          <form id="laptopForm" class="form-grid">
+            <input type="hidden" id="laptopId">
+
+            <div class="field">
+              <label for="lBrand">Brand *</label>
+              <input type="text" id="lBrand" placeholder="HP, Dell, Lenovo..." required>
+            </div>
+            <div class="field">
+              <label for="lModel">Model *</label>
+              <input type="text" id="lModel" placeholder="Pavilion 15, ThinkPad T14..." required>
+            </div>
+            <div class="field">
+              <label for="lSerial">Serial number *</label>
+              <input type="text" id="lSerial" placeholder="Unique serial no." required>
+            </div>
+            <div class="field">
+              <label for="lCondition">Condition</label>
+              <select id="lCondition">
+                <option value="new">Naya</option>
+                <option value="used_excellent">Used — excellent</option>
+                <option value="used_good">Used — good</option>
+                <option value="used_fair">Used — fair</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="lBuyDate">Buy date *</label>
+              <input type="date" id="lBuyDate" required>
+            </div>
+            <div class="field">
+              <label for="lBuyPrice">Buy price (Rs) *</label>
+              <input type="number" id="lBuyPrice" placeholder="0" min="0" step="1" required>
+            </div>
+            <div class="field">
+              <label for="lBuyFrom">Kahan se aaya (supplier)</label>
+              <input type="text" id="lBuyFrom" placeholder="Supplier ka naam">
+            </div>
+            <div class="field">
+              <label for="lNotes">Notes</label>
+              <input type="text" id="lNotes" placeholder="Specs, extra detail (optional)">
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="laptopSubmitBtn"><i data-icon="device-floppy"></i> Save karein</button>
+              <button type="button" class="btn btn-ghost hidden" id="laptopCancelBtn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===== SELL LAPTOP MODAL (rendered into DOM, shown via class) ===== -->
+      <div class="modal-overlay hidden" id="sellModalOverlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h2>Laptop bechein</h2>
+            <button class="icon-btn" id="sellModalClose"><i data-icon="x"></i></button>
+          </div>
+          <form id="sellForm" class="form-grid">
+            <input type="hidden" id="sellLaptopId">
+            <p class="modal-laptop-name" id="sellLaptopName"></p>
+
+            <div class="field">
+              <label for="sSellDate">Sell date *</label>
+              <input type="date" id="sSellDate" required>
+            </div>
+            <div class="field">
+              <label for="sSellPrice">Sell price (Rs) *</label>
+              <input type="number" id="sSellPrice" placeholder="0" min="0" step="1" required>
+            </div>
+            <div class="field field-full">
+              <label for="sSoldTo">Kis ko becha (customer)</label>
+              <input type="text" id="sSoldTo" placeholder="Customer ka naam">
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"><i data-icon="check"></i> Confirm sale</button>
+              <button type="button" class="btn btn-ghost" id="sellCancelBtn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ===== CASH LEDGER PAGE ===== -->
+      <section class="page hidden" id="page-cashLedger">
+        <div class="stat-grid stat-grid-3">
+          <div class="stat-card">
+            <div class="stat-icon c-green"><i data-icon="arrow-down"></i></div>
+            <div>
+              <p class="stat-label">Total cash in</p>
+              <p class="stat-value" id="ledgerTotalIn">Rs 0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-coral"><i data-icon="arrow-up"></i></div>
+            <div>
+              <p class="stat-label">Total cash out</p>
+              <p class="stat-value" id="ledgerTotalOut">Rs 0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-blue"><i data-icon="wallet"></i></div>
+            <div>
+              <p class="stat-label">Balance</p>
+              <p class="stat-value" id="ledgerBalance">Rs 0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel form-panel">
+          <h2>Nayi cash entry</h2>
+          <form id="cashForm" class="form-grid">
+            <div class="field">
+              <label for="cType">Type *</label>
+              <select id="cType" required>
+                <option value="in">Cash in (aaya)</option>
+                <option value="out">Cash out (gaya)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="cAmount">Amount (Rs) *</label>
+              <input type="number" id="cAmount" placeholder="0" min="0" step="1" required>
+            </div>
+            <div class="field">
+              <label for="cDate">Date *</label>
+              <input type="date" id="cDate" required>
+            </div>
+            <div class="field">
+              <label for="cReason">Reason / detail</label>
+              <input type="text" id="cReason" placeholder="Kis cheez ke liye">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"><i data-icon="plus"></i> Entry add karein</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h2>Saari entries</h2></div>
+          <div class="list" id="cashList">
+            <p class="empty-state">Koi cash entry nahi hai</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REPORTS PAGE ===== -->
+      <section class="page hidden" id="page-reports">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon c-blue"><i data-icon="package"></i></div>
+            <div>
+              <p class="stat-label">Total investment</p>
+              <p class="stat-value" id="repInvestment">Rs 0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-teal"><i data-icon="receipt-2"></i></div>
+            <div>
+              <p class="stat-label">Total revenue</p>
+              <p class="stat-value" id="repRevenue">Rs 0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-green"><i data-icon="trending-up"></i></div>
+            <div>
+              <p class="stat-label">Total profit</p>
+              <p class="stat-value" id="repProfit">Rs 0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-amber"><i data-icon="percentage"></i></div>
+            <div>
+              <p class="stat-label">Avg. margin</p>
+              <p class="stat-value" id="repMargin">0%</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h2>Brand ke hisaab se</h2></div>
+          <div class="table-wrap">
+            <table class="data-table" id="brandTable">
+              <thead><tr><th>Brand</th><th>Total</th><th>Sold</th><th>Profit</th></tr></thead>
+              <tbody id="brandTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== USERS PAGE (admin only) ===== -->
+      <section class="page hidden" id="page-users">
+        <div class="panel">
+          <div class="panel-header"><h2>Pending approvals</h2></div>
+          <div class="list" id="pendingUsersList">
+            <p class="empty-state">Koi pending request nahi hai</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>Approved users</h2></div>
+          <div class="list" id="approvedUsersList">
+            <p class="empty-state">Koi approved user nahi hai</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- Firebase SDKs -->
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
