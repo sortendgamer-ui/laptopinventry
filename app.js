@@ -128,12 +128,12 @@ async function checkIsFirstUser() {
 
 function friendlyAuthError(err) {
   const code = err.code || "";
-  if (code.includes("email-already-in-use")) return "Ye email pehle se registered hai.";
-  if (code.includes("invalid-email")) return "Email sahi format me nahi hai.";
-  if (code.includes("weak-password")) return "Password kam se kam 6 characters ka hona chahiye.";
-  if (code.includes("user-not-found") || code.includes("wrong-password") || code.includes("invalid-credential")) return "Email ya password galat hai.";
-  if (code.includes("too-many-requests")) return "Bahut zyada attempts ho gaye. Thodi der baad try karein.";
-  return "Kuch galat ho gaya. Dobara try karein.";
+  if (code.includes("email-already-in-use")) return "This email is already registered.";
+  if (code.includes("invalid-email")) return "Please enter a valid email address.";
+  if (code.includes("weak-password")) return "Password must be at least 6 characters.";
+  if (code.includes("user-not-found") || code.includes("wrong-password") || code.includes("invalid-credential")) return "Incorrect email or password.";
+  if (code.includes("too-many-requests")) return "Too many attempts. Please try again later.";
+  return "Something went wrong. Please try again.";
 }
 
 $("showSignupBtn").addEventListener("click", () => showScreen("signupScreen"));
@@ -212,14 +212,15 @@ function attachListeners() {
     renderDashboard();
     renderInventory();
     renderReports();
-  }, (err) => showToast("Data load nahi ho saka: " + err.message, "error"));
+    renderSoldHistory();
+  }, (err) => showToast("Failed to load data: " + err.message, "error"));
 
   const cashQ = query(collection(db, "cashEntries"), orderBy("date", "desc"));
   unsubCash = onSnapshot(cashQ, (snap) => {
     cashEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderDashboard();
     renderCashLedger();
-  }, (err) => showToast("Cash data load nahi ho saka: " + err.message, "error"));
+  }, (err) => showToast("Failed to load cash data: " + err.message, "error"));
 
   if (currentUserDoc.role === "admin") {
     const usersQ = collection(db, "users");
@@ -236,12 +237,17 @@ function attachListeners() {
 function navigateTo(page) {
   document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
   $("page-" + page).classList.remove("hidden");
+  // Sidebar nav
   document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.page === page));
+  // Bottom nav (mobile)
+  document.querySelectorAll(".bnav-item").forEach(n => n.classList.toggle("active", n.dataset.page === page));
   const titles = {
-    dashboard: "Dashboard", inventory: "Inventory", addLaptop: "Naya laptop add karein",
-    cashLedger: "Cash ledger", reports: "Reports", users: "Users manage karein"
+    dashboard: "Dashboard", inventory: "Inventory", addLaptop: "Add New Laptop",
+    soldHistory: "Sold History", cashLedger: "Cash Ledger", reports: "Reports", users: "Manage Users"
   };
   $("pageTitle").textContent = titles[page] || "Laptop Gallery";
+  // Scroll to top on page change
+  window.scrollTo({ top: 0, behavior: "smooth" });
   closeSidebar();
   if (page === "addLaptop" && !editingLaptopId) resetLaptopForm();
 }
@@ -251,6 +257,11 @@ document.querySelectorAll(".nav-item").forEach(item => {
 });
 document.querySelectorAll("[data-goto]").forEach(el => {
   el.addEventListener("click", () => navigateTo(el.dataset.goto));
+});
+
+// Bottom nav click listeners
+document.querySelectorAll(".bnav-item").forEach(item => {
+  item.addEventListener("click", () => navigateTo(item.dataset.page));
 });
 
 // Mobile sidebar
@@ -286,7 +297,7 @@ function renderDashboard() {
   const recent = [...laptops].slice(0, 6);
   const list = $("recentList");
   if (recent.length === 0) {
-    list.innerHTML = '<p class="empty-state">Koi entry nahi hai abhi</p>';
+    list.innerHTML = '<p class="empty-state">No entries yet</p>';
     return;
   }
   list.innerHTML = recent.map(l => `
@@ -296,7 +307,7 @@ function renderDashboard() {
         <p>SN: ${escapeHtml(l.serial)} • ${fmtDate(l.buyDate)}</p>
       </div>
       <div class="list-item-right">
-        <span class="badge ${l.status === 'in_stock' ? 'badge-stock' : 'badge-sold'}">${l.status === 'in_stock' ? 'Stock me' : 'Sold'}</span>
+        <span class="badge ${l.status === 'in_stock' ? 'badge-stock' : 'badge-sold'}">${l.status === 'in_stock' ? 'In Stock' : 'Sold'}</span>
       </div>
     </div>
   `).join("");
@@ -345,7 +356,7 @@ function renderInventory() {
         <td>${escapeHtml(l.serial)}</td>
         <td>${fmtDate(l.buyDate)}</td>
         <td>${fmtMoney(l.buyPrice)}</td>
-        <td><span class="badge ${l.status === 'in_stock' ? 'badge-stock' : 'badge-sold'}">${l.status === 'in_stock' ? 'Stock me' : 'Sold'}</span></td>
+        <td><span class="badge ${l.status === 'in_stock' ? 'badge-stock' : 'badge-sold'}">${l.status === 'in_stock' ? 'In Stock' : 'Sold'}</span></td>
         <td>${l.status === 'sold' ? fmtMoney(l.sellPrice) : '—'}</td>
         <td class="${profitClass}">${profitText}</td>
         <td>
@@ -365,7 +376,7 @@ function renderInventory() {
 }
 
 function conditionLabel(c) {
-  return { new: "Naya", used_excellent: "Used — excellent", used_good: "Used — good", used_fair: "Used — fair" }[c] || c || "";
+  return { new: "New", used_excellent: "Used — Excellent", used_good: "Used — Good", used_fair: "Used — Fair" }[c] || c || "";
 }
 
 $("inventorySearch").addEventListener("input", renderInventory);
@@ -379,8 +390,8 @@ function resetLaptopForm() {
   $("laptopForm").reset();
   $("laptopId").value = "";
   $("lBuyDate").value = todayStr();
-  $("laptopFormTitle").textContent = "Naya laptop add karein";
-  $("laptopSubmitBtn").innerHTML = '<i class="ti ti-device-floppy"></i> Save karein';
+  $("laptopFormTitle").textContent = "Add New Laptop";
+  $("laptopSubmitBtn").innerHTML = '<i class="ti ti-device-floppy"></i> Save';
   $("laptopCancelBtn").classList.add("hidden");
 }
 $("lBuyDate").value = todayStr();
@@ -398,8 +409,8 @@ function editLaptop(id) {
   $("lBuyPrice").value = l.buyPrice || "";
   $("lBuyFrom").value = l.buyFrom || "";
   $("lNotes").value = l.notes || "";
-  $("laptopFormTitle").textContent = "Laptop edit karein";
-  $("laptopSubmitBtn").innerHTML = '<i class="ti ti-device-floppy"></i> Update karein';
+  $("laptopFormTitle").textContent = "Edit Laptop";
+  $("laptopSubmitBtn").innerHTML = '<i class="ti ti-device-floppy"></i> Update';
   $("laptopCancelBtn").classList.remove("hidden");
   navigateTo("addLaptop");
   renderIcons();
@@ -424,7 +435,7 @@ $("laptopForm").addEventListener("submit", async (e) => {
   try {
     if (editingLaptopId) {
       await updateDoc(doc(db, "laptops", editingLaptopId), payload);
-      showToast("Laptop update ho gaya", "success");
+      showToast("Laptop updated successfully", "success");
     } else {
       payload.status = "in_stock";
       payload.sellDate = null;
@@ -433,23 +444,23 @@ $("laptopForm").addEventListener("submit", async (e) => {
       payload.createdAt = serverTimestamp();
       payload.createdBy = currentUser.email;
       await addDoc(collection(db, "laptops"), payload);
-      showToast("Laptop add ho gaya", "success");
+      showToast("Laptop added successfully", "success");
     }
     resetLaptopForm();
     navigateTo("inventory");
   } catch (err) {
-    showToast("Save nahi ho saka: " + err.message, "error");
+    showToast("Could not save: " + err.message, "error");
   }
   btn.disabled = false;
 });
 
 async function deleteLaptop(id) {
-  if (!confirm("Pakka delete karna hai? Ye wapas nahi aayega.")) return;
+  if (!confirm("Are you sure you want to delete this? This cannot be undone.")) return;
   try {
     await deleteDoc(doc(db, "laptops", id));
-    showToast("Laptop delete ho gaya", "success");
+    showToast("Laptop deleted successfully", "success");
   } catch (err) {
-    showToast("Delete nahi ho saka: " + err.message, "error");
+    showToast("Could not delete: " + err.message, "error");
   }
 }
 
@@ -480,17 +491,17 @@ $("sellForm").addEventListener("submit", async (e) => {
     await updateDoc(doc(db, "laptops", id), {
       status: "sold", sellDate, sellPrice, soldTo
     });
-    // Auto cash-in entry banate hain sale ke liye
+    // Auto cash-in entry on sale
     const l = laptops.find(x => x.id === id);
     await addDoc(collection(db, "cashEntries"), {
       type: "in", amount: sellPrice, date: sellDate,
-      reason: `${l ? l.brand + ' ' + l.model : 'Laptop'} sale${soldTo ? ' — ' + soldTo : ''}`,
+      reason: `${l ? l.brand + ' ' + l.model : 'Laptop'} sold${soldTo ? ' — to: ' + soldTo : ''}`,
       linkedLaptopId: id, createdAt: serverTimestamp(), createdBy: currentUser.email
     });
-    showToast("Sale confirm ho gayi", "success");
+    showToast("Sale confirmed successfully", "success");
     closeSellModal();
   } catch (err) {
-    showToast("Sale save nahi hui: " + err.message, "error");
+    showToast("Could not save sale: " + err.message, "error");
   }
 });
 
@@ -508,13 +519,13 @@ function renderCashLedger() {
 
   const list = $("cashList");
   if (cashEntries.length === 0) {
-    list.innerHTML = '<p class="empty-state">Koi cash entry nahi hai</p>';
+    list.innerHTML = '<p class="empty-state">No cash entries yet</p>';
     return;
   }
   list.innerHTML = cashEntries.map(c => `
     <div class="list-item">
       <div class="list-item-main">
-        <p>${escapeHtml(c.reason || (c.type === 'in' ? 'Cash in' : 'Cash out'))}</p>
+        <p>${escapeHtml(c.reason || (c.type === 'in' ? 'Cash In' : 'Cash Out'))}</p>
         <p>${fmtDate(c.date)}</p>
       </div>
       <div class="list-item-right">
@@ -541,19 +552,19 @@ $("cashForm").addEventListener("submit", async (e) => {
     await addDoc(collection(db, "cashEntries"), payload);
     $("cashForm").reset();
     $("cDate").value = todayStr();
-    showToast("Cash entry add ho gayi", "success");
+    showToast("Cash entry added successfully", "success");
   } catch (err) {
-    showToast("Save nahi ho saka: " + err.message, "error");
+    showToast("Could not save: " + err.message, "error");
   }
 });
 
 async function deleteCashEntry(id) {
-  if (!confirm("Ye entry delete karni hai?")) return;
+  if (!confirm("Delete this entry?")) return;
   try {
     await deleteDoc(doc(db, "cashEntries", id));
-    showToast("Entry delete ho gayi", "success");
+    showToast("Entry deleted successfully", "success");
   } catch (err) {
-    showToast("Delete nahi ho saka: " + err.message, "error");
+    showToast("Could not delete: " + err.message, "error");
   }
 }
 
@@ -587,7 +598,7 @@ function renderReports() {
   const tbody = $("brandTableBody");
   const brands = Object.keys(byBrand).sort();
   if (brands.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Abhi koi data nahi hai</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No data yet</td></tr>';
     return;
   }
   tbody.innerHTML = brands.map(b => {
@@ -606,7 +617,7 @@ function renderUsers(users) {
 
   const pendingList = $("pendingUsersList");
   pendingList.innerHTML = pending.length === 0
-    ? '<p class="empty-state">Koi pending request nahi hai</p>'
+    ? '<p class="empty-state">No pending requests</p>'
     : pending.map(u => `
       <div class="list-item">
         <div class="list-item-main">
@@ -622,11 +633,11 @@ function renderUsers(users) {
 
   const approvedList = $("approvedUsersList");
   approvedList.innerHTML = approved.length === 0
-    ? '<p class="empty-state">Koi approved user nahi hai</p>'
+    ? '<p class="empty-state">No approved users yet</p>'
     : approved.map(u => `
       <div class="list-item">
         <div class="list-item-main">
-          <p>${escapeHtml(u.name)} ${u.id === currentUser.uid ? "(aap)" : ""}</p>
+          <p>${escapeHtml(u.name)} ${u.id === currentUser.uid ? "(you)" : ""}</p>
           <p>${escapeHtml(u.email)} • ${u.role}</p>
         </div>
         <div class="list-item-right">
@@ -644,11 +655,103 @@ function renderUsers(users) {
 async function setUserStatus(uid, status) {
   try {
     await updateDoc(doc(db, "users", uid), { status });
-    showToast("User update ho gaya", "success");
+    showToast("User updated successfully", "success");
   } catch (err) {
-    showToast("Update nahi ho saka: " + err.message, "error");
+    showToast("Could not update: " + err.message, "error");
   }
 }
+
+
+// ============================================================
+// SOLD HISTORY
+// ============================================================
+let soldMonthFilterVal = "";
+
+function renderSoldHistory() {
+  const soldLaptops = laptops.filter(l => l.status === "sold");
+
+  // Stats (sab sold laptops ke liye, filter ke bina)
+  const now = new Date();
+  const thisMonth = now.getMonth(), thisYear = now.getFullYear();
+  const soldThisMonth = soldLaptops.filter(l => l.sellDate && inSameMonth(l.sellDate, thisMonth, thisYear)).length;
+  const totalRevenue = soldLaptops.reduce((s, l) => s + Number(l.sellPrice || 0), 0);
+  const totalProfit = soldLaptops.reduce((s, l) => s + (Number(l.sellPrice || 0) - Number(l.buyPrice || 0)), 0);
+
+  $("soldStatTotal").textContent = soldLaptops.length;
+  $("soldStatRevenue").textContent = fmtMoney(totalRevenue);
+  $("soldStatProfit").textContent = fmtMoney(totalProfit);
+  $("soldStatMonth").textContent = soldThisMonth;
+
+  // Filter by month agar selected hai
+  let filtered = soldLaptops;
+  if (soldMonthFilterVal) {
+    const [fyear, fmonth] = soldMonthFilterVal.split("-").map(Number);
+    filtered = soldLaptops.filter(l => {
+      if (!l.sellDate) return false;
+      const d = new Date(l.sellDate);
+      return d.getFullYear() === fyear && (d.getMonth() + 1) === fmonth;
+    });
+  }
+
+  // Sort by sellDate newest first
+  filtered.sort((a, b) => (b.sellDate || "").localeCompare(a.sellDate || ""));
+
+  const tbody = $("soldHistoryTableBody");
+  const emptyEl = $("soldHistoryEmpty");
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = "";
+    emptyEl.classList.remove("hidden");
+    return;
+  }
+  emptyEl.classList.add("hidden");
+
+  tbody.innerHTML = filtered.map(l => {
+    const profit = Number(l.sellPrice || 0) - Number(l.buyPrice || 0);
+    const profitClass = profit >= 0 ? "profit-pos" : "profit-neg";
+    return `
+      <tr>
+        <td>
+          <div class="cell-main">${escapeHtml(l.brand)} ${escapeHtml(l.model)}</div>
+          <div class="cell-sub">${conditionLabel(l.condition)}</div>
+        </td>
+        <td style="font-family:var(--font-mono);font-size:13px">${escapeHtml(l.serial)}</td>
+        <td>${fmtDate(l.buyDate)}</td>
+        <td><strong>${fmtDate(l.sellDate)}</strong></td>
+        <td>${fmtMoney(l.buyPrice)}</td>
+        <td style="font-weight:600;color:var(--green-600)">${fmtMoney(l.sellPrice)}</td>
+        <td class="${profitClass}">${profit >= 0 ? "+" : ""}${fmtMoney(profit)}</td>
+        <td>${escapeHtml(l.soldTo || "—")}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// Month filter aur clear
+document.addEventListener("DOMContentLoaded", () => {
+  // Set current month as default
+  const now = new Date();
+  const monthStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+
+  const monthInput = $("soldMonthFilter");
+  if (monthInput) {
+    monthInput.value = monthStr;
+    soldMonthFilterVal = monthStr;
+    monthInput.addEventListener("change", () => {
+      soldMonthFilterVal = monthInput.value;
+      renderSoldHistory();
+    });
+  }
+
+  const clearBtn = $("soldClearFilter");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      soldMonthFilterVal = "";
+      if (monthInput) monthInput.value = "";
+      renderSoldHistory();
+    });
+  }
+});
 
 // ============================================================
 // INITIAL ICON RENDER (auth screens before app loads)
