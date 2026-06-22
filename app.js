@@ -41,7 +41,7 @@ let unsubCash = null;
 let unsubUsers = null;
 let editingLaptopId = null;
 
-const ADMIN_EMAILS = []; // pehla signup karne wala admin ban jayega agar ye list khaali hai
+const ADMIN_EMAILS = ["faizanfazal4476@gmail.com"]; // ye email hamesha admin + approved banega
 
 // ============================================================
 // HELPERS
@@ -151,13 +151,25 @@ onAuthStateChanged(auth, async (user) => {
   }
   currentUser = user;
   showScreen("loadingScreen");
+  const isWhitelistedAdmin = ADMIN_EMAILS.includes((user.email || "").toLowerCase());
   const userSnap = await getDoc(doc(db, "users", user.uid));
+
   if (!userSnap.exists()) {
-    // Edge case: auth account exists par users/ doc nahi (shayad purana account) — staff/pending bana dein
+    // Edge case: auth account exists par users/ doc nahi (shayad purana account) — bana dein
     await setDoc(doc(db, "users", user.uid), {
-      name: user.email.split("@")[0], email: user.email, role: "staff", status: "pending", createdAt: serverTimestamp()
+      name: user.email.split("@")[0], email: user.email,
+      role: isWhitelistedAdmin ? "admin" : "staff",
+      status: isWhitelistedAdmin ? "approved" : "pending",
+      createdAt: serverTimestamp()
     });
+  } else if (isWhitelistedAdmin) {
+    // Whitelisted email hamesha admin + approved force ho (chahe pehle pending/staff ho)
+    const existing = userSnap.data();
+    if (existing.role !== "admin" || existing.status !== "approved") {
+      await updateDoc(doc(db, "users", user.uid), { role: "admin", status: "approved" });
+    }
   }
+
   const snap = await getDoc(doc(db, "users", user.uid));
   currentUserDoc = snap.data();
 
