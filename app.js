@@ -42,6 +42,7 @@ let unsubUsers = null;
 let editingLaptopId = null;
 
 const ADMIN_EMAILS = ["faizanfazal4476@gmail.com"]; // ye email hamesha admin + approved banega
+const ADMIN_PASSWORD = ["faizanfazal1234"]; // Pehla user jo is email se signup karega, usko ye password use karna hoga (ya manually set karna hoga) taki wo admin ban sake. Baad mein is password ko change kar dena chahiye.
 
 // ============================================================
 // HELPERS
