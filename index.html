@@ -11,23 +11,18 @@
 </head>
 <body>
 
-<!-- ============ LOADING SCREEN ============ -->
+<!-- LOADING -->
 <div id="loadingScreen" class="loading-screen">
-  <div class="loading-logo">
-    <i data-icon="device-laptop"></i>
-  </div>
+  <div class="loading-logo"><i class="ti ti-device-laptop"></i></div>
   <p class="loading-text">Laptop Gallery</p>
 </div>
 
-<!-- ============ LOGIN SCREEN ============ -->
+<!-- LOGIN -->
 <div id="loginScreen" class="auth-screen hidden">
   <div class="auth-card">
-    <div class="auth-logo">
-      <i data-icon="device-laptop"></i>
-    </div>
+    <div class="auth-logo"><i class="ti ti-device-laptop"></i></div>
     <h1 class="auth-title">Laptop Gallery</h1>
     <p class="auth-subtitle">Wholesale stock &amp; cash manager</p>
-
     <form id="loginForm" class="auth-form">
       <div class="field">
         <label for="loginEmail">Email</label>
@@ -38,96 +33,32 @@
         <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
       </div>
       <p id="loginError" class="form-error hidden"></p>
-      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
-        <span>Login</span>
-      </button>
+      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Login</button>
     </form>
-
-    <button id="showSignupBtn" class="link-btn">Don't have an account? Sign up</button>
+    <p class="auth-note">Contact admin to get access.</p>
   </div>
 </div>
 
-<!-- ============ SIGNUP SCREEN ============ -->
-<div id="signupScreen" class="auth-screen hidden">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <i data-icon="device-laptop"></i>
-    </div>
-    <h1 class="auth-title">Create Account</h1>
-    <p class="auth-subtitle">After sign up, admin approval is required to access the system.</p>
-
-    <form id="signupForm" class="auth-form">
-      <div class="field">
-        <label for="signupName">Full name</label>
-        <input type="text" id="signupName" placeholder="Your full name" required>
-      </div>
-      <div class="field">
-        <label for="signupEmail">Email</label>
-        <input type="email" id="signupEmail" placeholder="your@email.com" required autocomplete="username">
-      </div>
-      <div class="field">
-        <label for="signupPassword">Password</label>
-        <input type="password" id="signupPassword" placeholder="At least 6 characters" required autocomplete="new-password">
-      </div>
-      <p id="signupError" class="form-error hidden"></p>
-      <button type="submit" class="btn btn-primary btn-block" id="signupBtn">
-        <span>Create Account</span>
-      </button>
-    </form>
-
-    <button id="showLoginBtn" class="link-btn">Already have an account? Login</button>
-  </div>
-</div>
-
-<!-- ============ PENDING APPROVAL SCREEN ============ -->
-<div id="pendingScreen" class="auth-screen hidden">
-  <div class="auth-card">
-    <div class="auth-logo pending">
-      <i data-icon="clock-hour-4"></i>
-    </div>
-    <h1 class="auth-title">Waiting for Approval</h1>
-    <p class="auth-subtitle">Your account has been created. You will be able to login once the admin approves your request.</p>
-    <button id="pendingLogoutBtn" class="btn btn-secondary btn-block">Logout</button>
-  </div>
-</div>
-
-<!-- ============ MAIN APP ============ -->
+<!-- MAIN APP -->
 <div id="appShell" class="app-shell hidden">
 
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-top">
       <div class="brand">
-        <div class="brand-icon"><i data-icon="device-laptop"></i></div>
+        <div class="brand-icon"><i class="ti ti-device-laptop"></i></div>
         <span class="brand-name">Laptop Gallery</span>
       </div>
-      <button class="sidebar-close" id="sidebarClose" aria-label="Close menu"><i data-icon="x"></i></button>
+      <button class="sidebar-close" id="sidebarClose"><i class="ti ti-x"></i></button>
     </div>
-
     <nav class="nav">
-      <button class="nav-item active" data-page="dashboard">
-        <i data-icon="layout-dashboard"></i><span>Dashboard</span>
-      </button>
-      <button class="nav-item" data-page="inventory">
-        <i data-icon="device-laptop"></i><span>Inventory</span>
-      </button>
-      <button class="nav-item" data-page="addLaptop">
-        <i data-icon="plus"></i><span>Add New Laptop</span>
-      </button>
-      <button class="nav-item" data-page="soldHistory">
-        <i data-icon="receipt-2"></i><span>Sold History</span>
-      </button>
-      <button class="nav-item" data-page="cashLedger">
-        <i data-icon="cash"></i><span>Cash Ledger</span>
-      </button>
-      <button class="nav-item" data-page="reports">
-        <i data-icon="chart-bar"></i><span>Reports</span>
-      </button>
-      <button class="nav-item admin-only hidden" data-page="users">
-        <i data-icon="users"></i><span>Manage Users</span>
-      </button>
+      <button class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></button>
+      <button class="nav-item" data-page="inventory"><i class="ti ti-device-laptop"></i><span>Inventory</span></button>
+      <button class="nav-item" data-page="addLaptop"><i class="ti ti-plus"></i><span>Add New Laptop</span></button>
+      <button class="nav-item" data-page="soldHistory"><i class="ti ti-receipt-2"></i><span>Sold History</span></button>
+      <button class="nav-item" data-page="cashLedger"><i class="ti ti-cash"></i><span>Cash Ledger</span></button>
+      <button class="nav-item" data-page="reports"><i class="ti ti-chart-bar"></i><span>Reports</span></button>
+      <button class="nav-item admin-only hidden" data-page="users"><i class="ti ti-users"></i><span>Manage Users</span></button>
     </nav>
-
     <div class="sidebar-bottom">
       <div class="user-chip">
         <div class="user-avatar" id="userAvatar">A</div>
@@ -136,130 +67,107 @@
           <p class="user-role" id="sidebarUserRole">Staff</p>
         </div>
       </div>
-      <button class="btn btn-ghost btn-block" id="logoutBtn">
-        <i data-icon="logout"></i><span>Logout</span>
-      </button>
+      <button class="btn btn-ghost btn-block" id="logoutBtn"><i class="ti ti-logout"></i><span>Logout</span></button>
     </div>
   </aside>
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-  <!-- Main content -->
   <div class="main">
     <header class="topbar">
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu"><i data-icon="menu-2"></i></button>
+      <button class="menu-btn" id="menuBtn"><i class="ti ti-menu-2"></i></button>
       <h1 class="page-title" id="pageTitle">Dashboard</h1>
       <div class="topbar-right">
-        <span class="sync-badge" id="syncBadge"><i data-icon="circle-filled"></i> Live</span>
+        <span class="sync-badge"><i class="ti ti-circle-filled"></i> Live</span>
       </div>
     </header>
 
-    <main class="content" id="content">
+    <main class="content">
 
-      <!-- ===== DASHBOARD PAGE ===== -->
+      <!-- DASHBOARD -->
       <section class="page" id="page-dashboard">
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-icon c-blue"><i data-icon="device-laptop"></i></div>
-            <div>
-              <p class="stat-label">In Stock</p>
-              <p class="stat-value" id="statInStock">0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-teal"><i data-icon="checks"></i></div>
-            <div>
-              <p class="stat-label">Total Sold</p>
-              <p class="stat-value" id="statSold">0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-green"><i data-icon="cash"></i></div>
-            <div>
-              <p class="stat-label">Cash In (This Month)</p>
-              <p class="stat-value" id="statCashIn">Rs 0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-amber"><i data-icon="trending-up"></i></div>
-            <div>
-              <p class="stat-label">Profit (This Month)</p>
-              <p class="stat-value" id="statProfit">Rs 0</p>
-            </div>
-          </div>
+          <div class="stat-card"><div class="stat-icon c-blue"><i class="ti ti-device-laptop"></i></div><div><p class="stat-label">In Stock</p><p class="stat-value" id="statInStock">0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-teal"><i class="ti ti-checks"></i></div><div><p class="stat-label">Total Sold</p><p class="stat-value" id="statSold">0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-green"><i class="ti ti-cash"></i></div><div><p class="stat-label">Cash In (Month)</p><p class="stat-value" id="statCashIn">Rs 0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-amber"><i class="ti ti-trending-up"></i></div><div><p class="stat-label">Profit (Month)</p><p class="stat-value" id="statProfit">Rs 0</p></div></div>
         </div>
-
         <div class="panel">
-          <div class="panel-header">
-            <h2>Recent Entries</h2>
-            <button class="btn btn-ghost btn-sm" data-goto="inventory">View All <i data-icon="arrow-right"></i></button>
-          </div>
-          <div class="list" id="recentList">
-            <p class="empty-state">No entries yet</p>
-          </div>
+          <div class="panel-header"><h2>Recent Entries</h2><button class="btn btn-ghost btn-sm" data-goto="inventory">View All <i class="ti ti-arrow-right"></i></button></div>
+          <div class="list" id="recentList"><p class="empty-state">No entries yet</p></div>
         </div>
-
         <div class="quick-actions">
-          <button class="btn btn-primary" data-goto="addLaptop"><i data-icon="plus"></i> Add Laptop</button>
-          <button class="btn btn-secondary" data-goto="cashLedger"><i data-icon="receipt"></i> Cash Entry</button>
+          <button class="btn btn-primary" data-goto="addLaptop"><i class="ti ti-plus"></i> Add Laptop</button>
+          <button class="btn btn-secondary" data-goto="cashLedger"><i class="ti ti-receipt"></i> Cash Entry</button>
         </div>
       </section>
 
-      <!-- ===== INVENTORY PAGE ===== -->
+      <!-- INVENTORY -->
       <section class="page hidden" id="page-inventory">
         <div class="toolbar">
-          <div class="search-box">
-            <i data-icon="search"></i>
-            <input type="text" id="inventorySearch" placeholder="Search by brand, model or serial no.">
-          </div>
+          <div class="search-box"><i class="ti ti-search"></i><input type="text" id="inventorySearch" placeholder="Search brand, model or serial no."></div>
           <select id="inventoryFilter" class="select-input">
             <option value="all">Show All</option>
             <option value="in_stock">In Stock</option>
             <option value="sold">Sold</option>
           </select>
         </div>
-
         <div class="table-wrap">
-          <table class="data-table" id="inventoryTable">
-            <thead>
-              <tr>
-                <th>Laptop</th>
-                <th>Serial No.</th>
-                <th>Buy Date</th>
-                <th>Buy Price</th>
-                <th>Status</th>
-                <th>Sell Price</th>
-                <th>Profit</th>
-                <th></th>
-              </tr>
-            </thead>
+          <table class="data-table">
+            <thead><tr><th>Laptop</th><th>Serial No.</th><th>Buy Date</th><th>Buy Price</th><th>Status</th><th>Sell Price</th><th>Profit</th><th></th></tr></thead>
             <tbody id="inventoryTableBody"></tbody>
           </table>
           <p class="empty-state hidden" id="inventoryEmpty">No laptops found</p>
         </div>
       </section>
 
-      <!-- ===== ADD LAPTOP PAGE ===== -->
+      <!-- ADD LAPTOP -->
       <section class="page hidden" id="page-addLaptop">
+
+        <!-- SCAN PANEL -->
+        <div class="panel scan-panel">
+          <h2 class="scan-title"><i class="ti ti-scan"></i> Quick Scan</h2>
+          <p class="scan-desc">Scan laptop sticker with camera — AI will auto-fill Brand, Model &amp; Serial No.</p>
+          <div class="scan-btns">
+            <button type="button" class="btn btn-primary scan-btn" id="btnCameraAI"><i class="ti ti-camera"></i> Scan Sticker (AI)</button>
+            <button type="button" class="btn btn-secondary scan-btn" id="btnBarcode"><i class="ti ti-barcode"></i> Scan Barcode / QR</button>
+          </div>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+
+          <!-- Barcode view -->
+          <div id="barcodeView" class="barcode-view hidden">
+            <div class="barcode-header">
+              <span>Point at barcode or QR code</span>
+              <button type="button" class="icon-btn" id="closeBarcodeBtn"><i class="ti ti-x"></i></button>
+            </div>
+            <video id="barcodeVideo" playsinline autoplay muted></video>
+            <div class="scan-line"></div>
+            <p class="barcode-hint">Hold steady — scanning...</p>
+          </div>
+
+          <!-- AI status -->
+          <div id="aiScanStatus" class="ai-scan-status hidden">
+            <div class="ai-scan-spinner"></div>
+            <span id="aiScanText">Reading sticker with AI...</span>
+          </div>
+
+          <!-- Result -->
+          <div id="scanResult" class="scan-result hidden">
+            <div class="scan-result-icon"><i class="ti ti-circle-check"></i></div>
+            <div class="scan-result-fields" id="scanResultFields"></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="clearScanBtn"><i class="ti ti-refresh"></i> Scan again</button>
+          </div>
+        </div>
+
+        <!-- FORM -->
         <div class="panel form-panel">
           <h2 id="laptopFormTitle">Add New Laptop</h2>
           <form id="laptopForm" class="form-grid">
             <input type="hidden" id="laptopId">
-
-            <div class="field">
-              <label for="lBrand">Brand *</label>
-              <input type="text" id="lBrand" placeholder="HP, Dell, Lenovo..." required>
-            </div>
-            <div class="field">
-              <label for="lModel">Model *</label>
-              <input type="text" id="lModel" placeholder="Pavilion 15, ThinkPad T14..." required>
-            </div>
-            <div class="field">
-              <label for="lSerial">Serial Number *</label>
-              <input type="text" id="lSerial" placeholder="Unique serial number" required>
-            </div>
-            <div class="field">
-              <label for="lCondition">Condition</label>
+            <div class="field"><label for="lBrand">Brand *</label><input type="text" id="lBrand" placeholder="HP, Dell, Lenovo..." required></div>
+            <div class="field"><label for="lModel">Model *</label><input type="text" id="lModel" placeholder="Pavilion 15, ThinkPad T14..." required></div>
+            <div class="field"><label for="lSerial">Serial Number *</label><input type="text" id="lSerial" placeholder="Unique serial number" required></div>
+            <div class="field"><label for="lCondition">Condition</label>
               <select id="lCondition">
                 <option value="new">New</option>
                 <option value="used_excellent">Used — Excellent</option>
@@ -267,203 +175,85 @@
                 <option value="used_fair">Used — Fair</option>
               </select>
             </div>
-
-            <div class="field">
-              <label for="lBuyDate">Buy Date *</label>
-              <input type="date" id="lBuyDate" required>
-            </div>
-            <div class="field">
-              <label for="lBuyPrice">Buy Price (Rs) *</label>
-              <input type="number" id="lBuyPrice" placeholder="0" min="0" step="1" required>
-            </div>
-            <div class="field">
-              <label for="lBuyFrom">Purchased From (Supplier)</label>
-              <input type="text" id="lBuyFrom" placeholder="Supplier name">
-            </div>
-            <div class="field">
-              <label for="lNotes">Notes</label>
-              <input type="text" id="lNotes" placeholder="Specs, extra details (optional)">
-            </div>
-
+            <div class="field"><label for="lBuyDate">Buy Date *</label><input type="date" id="lBuyDate" required></div>
+            <div class="field"><label for="lBuyPrice">Buy Price (Rs) *</label><input type="number" id="lBuyPrice" placeholder="0" min="0" step="1" required></div>
+            <div class="field"><label for="lBuyFrom">Purchased From (Supplier)</label><input type="text" id="lBuyFrom" placeholder="Supplier name"></div>
+            <div class="field"><label for="lNotes">Notes</label><input type="text" id="lNotes" placeholder="Specs, extra details (optional)"></div>
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary" id="laptopSubmitBtn"><i data-icon="device-floppy"></i> Save</button>
+              <button type="submit" class="btn btn-primary" id="laptopSubmitBtn"><i class="ti ti-device-floppy"></i> Save</button>
               <button type="button" class="btn btn-ghost hidden" id="laptopCancelBtn">Cancel</button>
             </div>
           </form>
         </div>
       </section>
 
-      <!-- ===== SELL LAPTOP MODAL ===== -->
+      <!-- SELL MODAL -->
       <div class="modal-overlay hidden" id="sellModalOverlay">
         <div class="modal">
-          <div class="modal-header">
-            <h2>Sell Laptop</h2>
-            <button class="icon-btn" id="sellModalClose"><i data-icon="x"></i></button>
-          </div>
+          <div class="modal-header"><h2>Sell Laptop</h2><button class="icon-btn" id="sellModalClose"><i class="ti ti-x"></i></button></div>
           <form id="sellForm" class="form-grid">
             <input type="hidden" id="sellLaptopId">
             <p class="modal-laptop-name" id="sellLaptopName"></p>
-
-            <div class="field">
-              <label for="sSellDate">Sell Date *</label>
-              <input type="date" id="sSellDate" required>
-            </div>
-            <div class="field">
-              <label for="sSellPrice">Sell Price (Rs) *</label>
-              <input type="number" id="sSellPrice" placeholder="0" min="0" step="1" required>
-            </div>
-            <div class="field field-full">
-              <label for="sSoldTo">Sold To (Customer Name)</label>
-              <input type="text" id="sSoldTo" placeholder="Customer name">
-            </div>
-
+            <div class="field"><label for="sSellDate">Sell Date *</label><input type="date" id="sSellDate" required></div>
+            <div class="field"><label for="sSellPrice">Sell Price (Rs) *</label><input type="number" id="sSellPrice" placeholder="0" min="0" step="1" required></div>
+            <div class="field field-full"><label for="sSoldTo">Sold To (Customer Name)</label><input type="text" id="sSoldTo" placeholder="Customer name"></div>
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary"><i data-icon="check"></i> Confirm Sale</button>
+              <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Confirm Sale</button>
               <button type="button" class="btn btn-ghost" id="sellCancelBtn">Cancel</button>
             </div>
           </form>
         </div>
       </div>
 
-      <!-- ===== CASH LEDGER PAGE ===== -->
+      <!-- CASH LEDGER -->
       <section class="page hidden" id="page-cashLedger">
         <div class="stat-grid stat-grid-3">
-          <div class="stat-card">
-            <div class="stat-icon c-green"><i data-icon="arrow-down"></i></div>
-            <div>
-              <p class="stat-label">Total Cash In</p>
-              <p class="stat-value" id="ledgerTotalIn">Rs 0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-coral"><i data-icon="arrow-up"></i></div>
-            <div>
-              <p class="stat-label">Total Cash Out</p>
-              <p class="stat-value" id="ledgerTotalOut">Rs 0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-blue"><i data-icon="wallet"></i></div>
-            <div>
-              <p class="stat-label">Balance</p>
-              <p class="stat-value" id="ledgerBalance">Rs 0</p>
-            </div>
-          </div>
+          <div class="stat-card"><div class="stat-icon c-green"><i class="ti ti-arrow-down"></i></div><div><p class="stat-label">Total Cash In</p><p class="stat-value" id="ledgerTotalIn">Rs 0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-coral"><i class="ti ti-arrow-up"></i></div><div><p class="stat-label">Total Cash Out</p><p class="stat-value" id="ledgerTotalOut">Rs 0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-blue"><i class="ti ti-wallet"></i></div><div><p class="stat-label">Balance</p><p class="stat-value" id="ledgerBalance">Rs 0</p></div></div>
         </div>
-
         <div class="panel form-panel">
           <h2>New Cash Entry</h2>
           <form id="cashForm" class="form-grid">
-            <div class="field">
-              <label for="cType">Type *</label>
-              <select id="cType" required>
-                <option value="in">Cash In (Received)</option>
-                <option value="out">Cash Out (Spent)</option>
-              </select>
+            <div class="field"><label for="cType">Type *</label>
+              <select id="cType" required><option value="in">Cash In (Received)</option><option value="out">Cash Out (Spent)</option></select>
             </div>
-            <div class="field">
-              <label for="cAmount">Amount (Rs) *</label>
-              <input type="number" id="cAmount" placeholder="0" min="0" step="1" required>
-            </div>
-            <div class="field">
-              <label for="cDate">Date *</label>
-              <input type="date" id="cDate" required>
-            </div>
-            <div class="field">
-              <label for="cReason">Reason / Details</label>
-              <input type="text" id="cReason" placeholder="What was it for?">
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary"><i data-icon="plus"></i> Add Entry</button>
-            </div>
+            <div class="field"><label for="cAmount">Amount (Rs) *</label><input type="number" id="cAmount" placeholder="0" min="0" step="1" required></div>
+            <div class="field"><label for="cDate">Date *</label><input type="date" id="cDate" required></div>
+            <div class="field"><label for="cReason">Reason / Details</label><input type="text" id="cReason" placeholder="What was it for?"></div>
+            <div class="form-actions"><button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> Add Entry</button></div>
           </form>
         </div>
-
         <div class="panel">
           <div class="panel-header"><h2>All Entries</h2></div>
-          <div class="list" id="cashList">
-            <p class="empty-state">No cash entries yet</p>
-          </div>
+          <div class="list" id="cashList"><p class="empty-state">No cash entries yet</p></div>
         </div>
       </section>
 
-      <!-- ===== REPORTS PAGE ===== -->
+      <!-- REPORTS -->
       <section class="page hidden" id="page-reports">
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-icon c-blue"><i data-icon="package"></i></div>
-            <div>
-              <p class="stat-label">Total Investment</p>
-              <p class="stat-value" id="repInvestment">Rs 0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-teal"><i data-icon="receipt-2"></i></div>
-            <div>
-              <p class="stat-label">Total Revenue</p>
-              <p class="stat-value" id="repRevenue">Rs 0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-green"><i data-icon="trending-up"></i></div>
-            <div>
-              <p class="stat-label">Total Profit</p>
-              <p class="stat-value" id="repProfit">Rs 0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-amber"><i data-icon="percentage"></i></div>
-            <div>
-              <p class="stat-label">Avg. Margin</p>
-              <p class="stat-value" id="repMargin">0%</p>
-            </div>
-          </div>
+          <div class="stat-card"><div class="stat-icon c-blue"><i class="ti ti-package"></i></div><div><p class="stat-label">Total Investment</p><p class="stat-value" id="repInvestment">Rs 0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-teal"><i class="ti ti-receipt-2"></i></div><div><p class="stat-label">Total Revenue</p><p class="stat-value" id="repRevenue">Rs 0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-green"><i class="ti ti-trending-up"></i></div><div><p class="stat-label">Total Profit</p><p class="stat-value" id="repProfit">Rs 0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-amber"><i class="ti ti-percentage"></i></div><div><p class="stat-label">Avg. Margin</p><p class="stat-value" id="repMargin">0%</p></div></div>
         </div>
-
         <div class="panel">
           <div class="panel-header"><h2>By Brand</h2></div>
           <div class="table-wrap">
-            <table class="data-table" id="brandTable">
-              <thead><tr><th>Brand</th><th>Total</th><th>Sold</th><th>Profit</th></tr></thead>
-              <tbody id="brandTableBody"></tbody>
-            </table>
+            <table class="data-table"><thead><tr><th>Brand</th><th>Total</th><th>Sold</th><th>Profit</th></tr></thead><tbody id="brandTableBody"></tbody></table>
           </div>
         </div>
       </section>
 
-      <!-- ===== SOLD HISTORY PAGE ===== -->
+      <!-- SOLD HISTORY -->
       <section class="page hidden" id="page-soldHistory">
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-icon c-teal"><i data-icon="checks"></i></div>
-            <div>
-              <p class="stat-label">Total Sold</p>
-              <p class="stat-value" id="soldStatTotal">0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-green"><i data-icon="cash"></i></div>
-            <div>
-              <p class="stat-label">Total Revenue</p>
-              <p class="stat-value" id="soldStatRevenue">Rs 0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-amber"><i data-icon="trending-up"></i></div>
-            <div>
-              <p class="stat-label">Total Profit</p>
-              <p class="stat-value" id="soldStatProfit">Rs 0</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-blue"><i data-icon="calendar"></i></div>
-            <div>
-              <p class="stat-label">Sold This Month</p>
-              <p class="stat-value" id="soldStatMonth">0</p>
-            </div>
-          </div>
+          <div class="stat-card"><div class="stat-icon c-teal"><i class="ti ti-checks"></i></div><div><p class="stat-label">Total Sold</p><p class="stat-value" id="soldStatTotal">0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-green"><i class="ti ti-cash"></i></div><div><p class="stat-label">Total Revenue</p><p class="stat-value" id="soldStatRevenue">Rs 0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-amber"><i class="ti ti-trending-up"></i></div><div><p class="stat-label">Total Profit</p><p class="stat-value" id="soldStatProfit">Rs 0</p></div></div>
+          <div class="stat-card"><div class="stat-icon c-blue"><i class="ti ti-calendar"></i></div><div><p class="stat-label">Sold This Month</p><p class="stat-value" id="soldStatMonth">0</p></div></div>
         </div>
-
         <div class="panel">
           <div class="panel-header">
             <h2>Sold Laptops History</h2>
@@ -472,21 +262,9 @@
               <button class="btn btn-ghost btn-sm" id="soldClearFilter">Show All</button>
             </div>
           </div>
-
           <div class="table-wrap">
             <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Laptop</th>
-                  <th>Serial No.</th>
-                  <th>Purchased On</th>
-                  <th>Sold On</th>
-                  <th>Buy Price</th>
-                  <th>Sell Price</th>
-                  <th>Profit</th>
-                  <th>Customer</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Laptop</th><th>Serial No.</th><th>Purchased On</th><th>Sold On</th><th>Buy Price</th><th>Sell Price</th><th>Profit</th><th>Customer</th></tr></thead>
               <tbody id="soldHistoryTableBody"></tbody>
             </table>
             <p class="empty-state hidden" id="soldHistoryEmpty">No sold laptops found</p>
@@ -494,19 +272,11 @@
         </div>
       </section>
 
-      <!-- ===== USERS PAGE (admin only) ===== -->
+      <!-- USERS (admin only) -->
       <section class="page hidden" id="page-users">
         <div class="panel">
-          <div class="panel-header"><h2>Pending Approvals</h2></div>
-          <div class="list" id="pendingUsersList">
-            <p class="empty-state">No pending requests</p>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h2>Approved Users</h2></div>
-          <div class="list" id="approvedUsersList">
-            <p class="empty-state">No approved users yet</p>
-          </div>
+          <div class="panel-header"><h2>Approved Users</h2><button class="btn btn-primary btn-sm" id="addUserBtn"><i class="ti ti-plus"></i> Add User</button></div>
+          <div class="list" id="approvedUsersList"><p class="empty-state">No users yet</p></div>
         </div>
       </section>
 
@@ -514,37 +284,41 @@
   </div>
 </div>
 
+<!-- ADD USER MODAL (admin) -->
+<div class="modal-overlay hidden" id="addUserModalOverlay">
+  <div class="modal">
+    <div class="modal-header"><h2>Add New User</h2><button class="icon-btn" id="addUserModalClose"><i class="ti ti-x"></i></button></div>
+    <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:16px;">Create login credentials for a staff member. Share email &amp; password with them.</p>
+    <form id="addUserForm" class="form-grid">
+      <div class="field"><label>Full Name *</label><input type="text" id="newUserName" placeholder="Staff name" required></div>
+      <div class="field"><label>Email *</label><input type="email" id="newUserEmail" placeholder="staff@email.com" required></div>
+      <div class="field"><label>Password *</label><input type="password" id="newUserPassword" placeholder="Min 6 characters" required></div>
+      <div class="field"><label>Role</label>
+        <select id="newUserRole"><option value="staff">Staff</option><option value="admin">Admin</option></select>
+      </div>
+      <p id="addUserError" class="form-error hidden"></p>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="addUserSubmitBtn"><i class="ti ti-user-plus"></i> Create User</button>
+        <button type="button" class="btn btn-ghost" id="addUserCancelBtn">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-<!-- ============ BOTTOM NAV (mobile) ============ -->
+<!-- BOTTOM NAV (mobile) -->
 <nav class="bottom-nav" id="bottomNav">
   <div class="bottom-nav-inner">
-    <button class="bnav-item active" data-page="dashboard">
-      <i class="ti ti-layout-dashboard"></i>
-      <span>Home</span>
-    </button>
-    <button class="bnav-item" data-page="inventory">
-      <i class="ti ti-device-laptop"></i>
-      <span>Stock</span>
-    </button>
-    <button class="bnav-item" data-page="addLaptop">
-      <i class="ti ti-plus"></i>
-      <span>Add</span>
-    </button>
-    <button class="bnav-item" data-page="soldHistory">
-      <i class="ti ti-receipt-2"></i>
-      <span>Sold</span>
-    </button>
-    <button class="bnav-item" data-page="cashLedger">
-      <i class="ti ti-cash"></i>
-      <span>Cash</span>
-    </button>
+    <button class="bnav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span>Home</span></button>
+    <button class="bnav-item" data-page="inventory"><i class="ti ti-device-laptop"></i><span>Stock</span></button>
+    <button class="bnav-item" data-page="addLaptop"><i class="ti ti-plus"></i><span>Add</span></button>
+    <button class="bnav-item" data-page="soldHistory"><i class="ti ti-receipt-2"></i><span>Sold</span></button>
+    <button class="bnav-item" data-page="cashLedger"><i class="ti ti-cash"></i><span>Cash</span></button>
   </div>
 </nav>
 
 <!-- Toast -->
 <div id="toast" class="toast hidden"></div>
 
-<!-- Firebase SDKs -->
 <script type="module" src="firebase-config.js"></script>
 <script type="module" src="app.js"></script>
 </body>
