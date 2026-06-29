@@ -95,6 +95,27 @@ $("loginForm").addEventListener("submit", async e => {
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch(err) {
+    // Agar admin email hai aur account exist nahi karta — auto create karo
+    const isAdminEmail = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const notFound = (err.code||"").includes("user-not-found") ||
+                     (err.code||"").includes("invalid-credential") ||
+                     (err.code||"").includes("wrong-password");
+    if (isAdminEmail && notFound) {
+      // First time: auto-create admin account
+      try {
+        btn.textContent = "Creating admin account...";
+        await createUserWithEmailAndPassword(auth, email, password);
+        // Account ban gaya, onAuthStateChanged handle karega
+        return;
+      } catch(createErr) {
+        // Agar account pehle se bana tha — wrong password hai
+        errEl.textContent = "Incorrect password. Please try again.";
+        errEl.classList.remove("hidden");
+        btn.disabled = false;
+        btn.textContent = "Login";
+        return;
+      }
+    }
     errEl.textContent = friendlyAuthError(err);
     errEl.classList.remove("hidden");
     btn.disabled = false;
