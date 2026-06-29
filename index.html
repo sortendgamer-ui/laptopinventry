@@ -17,28 +17,6 @@
   <div class="loading-bar"></div>
 </div>
 
-<!-- LOGIN -->
-<div id="loginScreen" class="auth-screen hidden">
-  <div class="auth-card">
-    <div class="auth-logo"><i class="ti ti-device-laptop"></i></div>
-    <h1 class="auth-title">Laptop Gallery</h1>
-    <p class="auth-subtitle">Wholesale stock &amp; cash manager</p>
-    <form id="loginForm" class="auth-form">
-      <div class="field">
-        <label for="loginEmail">Email</label>
-        <input type="email" id="loginEmail" placeholder="your@email.com" required autocomplete="username">
-      </div>
-      <div class="field">
-        <label for="loginPassword">Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
-      </div>
-      <p id="loginError" class="form-error hidden"></p>
-      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Login</button>
-    </form>
-    <p class="auth-note">Contact admin to get access.</p>
-  </div>
-</div>
-
 <!-- MAIN APP -->
 <div id="appShell" class="app-shell hidden">
 
@@ -57,18 +35,8 @@
       <button class="nav-item" data-page="soldHistory"><i class="ti ti-receipt-2"></i><span>Sold History</span></button>
       <button class="nav-item" data-page="cashLedger"><i class="ti ti-cash"></i><span>Cash Ledger</span></button>
       <button class="nav-item" data-page="reports"><i class="ti ti-chart-bar"></i><span>Reports</span></button>
-      <button class="nav-item admin-only hidden" data-page="users"><i class="ti ti-users"></i><span>Manage Users</span></button>
     </nav>
-    <div class="sidebar-bottom">
-      <div class="user-chip">
-        <div class="user-avatar" id="userAvatar">A</div>
-        <div class="user-info">
-          <p class="user-name" id="sidebarUserName">User</p>
-          <p class="user-role" id="sidebarUserRole">Staff</p>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-block" id="logoutBtn"><i class="ti ti-logout"></i><span>Logout</span></button>
-    </div>
+    
   </aside>
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -272,36 +240,8 @@
         </div>
       </section>
 
-      <!-- USERS (admin only) -->
-      <section class="page hidden" id="page-users">
-        <div class="panel">
-          <div class="panel-header"><h2>Approved Users</h2><button class="btn btn-primary btn-sm" id="addUserBtn"><i class="ti ti-plus"></i> Add User</button></div>
-          <div class="list" id="approvedUsersList"><p class="empty-state">No users yet</p></div>
-        </div>
-      </section>
 
     </main>
-  </div>
-</div>
-
-<!-- ADD USER MODAL (admin) -->
-<div class="modal-overlay hidden" id="addUserModalOverlay">
-  <div class="modal">
-    <div class="modal-header"><h2>Add New User</h2><button class="icon-btn" id="addUserModalClose"><i class="ti ti-x"></i></button></div>
-    <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:16px;">Create login credentials for a staff member. Share email &amp; password with them.</p>
-    <form id="addUserForm" class="form-grid">
-      <div class="field"><label>Full Name *</label><input type="text" id="newUserName" placeholder="Staff name" required></div>
-      <div class="field"><label>Email *</label><input type="email" id="newUserEmail" placeholder="staff@email.com" required></div>
-      <div class="field"><label>Password *</label><input type="password" id="newUserPassword" placeholder="Min 6 characters" required></div>
-      <div class="field"><label>Role</label>
-        <select id="newUserRole"><option value="staff">Staff</option><option value="admin">Admin</option></select>
-      </div>
-      <p id="addUserError" class="form-error hidden"></p>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary" id="addUserSubmitBtn"><i class="ti ti-user-plus"></i> Create User</button>
-        <button type="button" class="btn btn-ghost" id="addUserCancelBtn">Cancel</button>
-      </div>
-    </form>
   </div>
 </div>
 

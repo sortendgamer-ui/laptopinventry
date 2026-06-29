@@ -1,15 +1,9 @@
 // ============================================================
 // LAPTOP GALLERY — APP LOGIC
 // ============================================================
-import { auth, db } from "./firebase-config.js";
+import { db } from "./firebase-config.js";
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import {
-  collection, doc, addDoc, updateDoc, deleteDoc, getDoc, setDoc,
+  collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
@@ -27,14 +21,11 @@ document.head.appendChild(_zxScript);
 // ============================================================
 // CONSTANTS
 // ============================================================
-const ADMIN_EMAIL = "faizanfazal4476@gmail.com";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 
 // ============================================================
 // STATE
 // ============================================================
-let currentUser     = null;
-let currentUserDoc  = null;
 let laptops         = [];
 let cashEntries     = [];
 let editingLaptopId = null;
@@ -66,7 +57,7 @@ function showToast(msg, type="default") {
 }
 
 function showScreen(id) {
-  ["loadingScreen","loginScreen","appShell"].forEach(s =>
+  ["loadingScreen","appShell"].forEach(s =>
     $(s).classList.toggle("hidden", s !== id));
 }
 
@@ -81,114 +72,22 @@ function conditionLabel(c) {
 }
 
 // ============================================================
-// AUTH — LOGIN ONLY (no public signup)
+// LOGIN HATA DIYA — Seedha app start hoga
 // ============================================================
-$("loginForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const email    = $("loginEmail").value.trim();
-  const password = $("loginPassword").value;
-  const btn      = $("loginBtn");
-  const errEl    = $("loginError");
-  errEl.classList.add("hidden");
-  btn.disabled = true;
-  btn.textContent = "Logging in...";
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch(err) {
-    // Agar admin email hai aur account exist nahi karta — auto create karo
-    const isAdminEmail = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    const notFound = (err.code||"").includes("user-not-found") ||
-                     (err.code||"").includes("invalid-credential") ||
-                     (err.code||"").includes("wrong-password");
-    if (isAdminEmail && notFound) {
-      // First time: auto-create admin account
-      try {
-        btn.textContent = "Creating admin account...";
-        await createUserWithEmailAndPassword(auth, email, password);
-        // Account ban gaya, onAuthStateChanged handle karega
-        return;
-      } catch(createErr) {
-        // Agar account pehle se bana tha — wrong password hai
-        errEl.textContent = "Incorrect password. Please try again.";
-        errEl.classList.remove("hidden");
-        btn.disabled = false;
-        btn.textContent = "Login";
-        return;
-      }
-    }
-    errEl.textContent = friendlyAuthError(err);
-    errEl.classList.remove("hidden");
-    btn.disabled = false;
-    btn.textContent = "Login";
-  }
-});
-
-$("logoutBtn").addEventListener("click", () => signOut(auth));
-
-function friendlyAuthError(err) {
-  const c = err.code || "";
-  if (c.includes("invalid-email"))      return "Please enter a valid email.";
-  if (c.includes("user-not-found") || c.includes("wrong-password") || c.includes("invalid-credential"))
-    return "Incorrect email or password.";
-  if (c.includes("too-many-requests"))  return "Too many attempts. Try again later.";
-  return "Login failed. Please try again.";
-}
-
-// ============================================================
-// AUTH STATE
-// ============================================================
-onAuthStateChanged(auth, async user => {
-  cleanupListeners();
-  if (!user) { currentUser = null; currentUserDoc = null; showScreen("loginScreen"); return; }
-
-  currentUser = user;
-  showScreen("loadingScreen");
-
-  const isAdmin = user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-
-  if (isAdmin) {
-    currentUserDoc = { name: user.displayName || "Admin", email: user.email, role: "admin", status: "approved" };
-    // Save/fix doc in background silently
-    setDoc(doc(db,"users",user.uid), { name: currentUserDoc.name, email: user.email, role:"admin", status:"approved", updatedAt: serverTimestamp() }, { merge:true }).catch(()=>{});
-    initApp();
-    return;
-  }
-
-  // Normal user — check Firestore
-  try {
-    const snap = await getDoc(doc(db,"users",user.uid));
-    if (!snap.exists()) {
-      // Account exists in Auth but no Firestore doc — create pending
-      await setDoc(doc(db,"users",user.uid), { name: user.email.split("@")[0], email: user.email, role:"staff", status:"approved", createdAt: serverTimestamp() });
-    }
-    const snap2 = await getDoc(doc(db,"users",user.uid));
-    currentUserDoc = snap2.data();
-    if (currentUserDoc.status !== "approved") { signOut(auth); showToast("Access denied. Contact admin.", "error"); return; }
-    initApp();
-  } catch(err) {
-    showToast("Connection error. Try again.", "error");
-    signOut(auth);
-  }
-});
-
 function cleanupListeners() {
   if (unsubLaptops) { unsubLaptops(); unsubLaptops = null; }
   if (unsubCash)    { unsubCash();    unsubCash    = null; }
   if (unsubUsers)   { unsubUsers();   unsubUsers   = null; }
 }
 
+// App seedha load karo bina login ke
+initApp();
+
 // ============================================================
 // INIT APP
 // ============================================================
 function initApp() {
   showScreen("appShell");
-  $("sidebarUserName").textContent = currentUserDoc.name || currentUser.email;
-  $("sidebarUserRole").textContent = currentUserDoc.role === "admin" ? "Admin" : "Staff";
-  $("userAvatar").textContent      = (currentUserDoc.name || currentUser.email)[0].toUpperCase();
-
-  document.querySelectorAll(".admin-only").forEach(el =>
-    el.classList.toggle("hidden", currentUserDoc.role !== "admin"));
-
   startListeners();
   navigateTo("dashboard");
 }
@@ -206,11 +105,6 @@ function startListeners() {
     renderDashboard(); renderCashLedger();
   }, err => showToast("Failed to load cash: "+err.message,"error"));
 
-  if (currentUserDoc.role === "admin") {
-    unsubUsers = onSnapshot(collection(db,"users"), snap => {
-      renderUsers(snap.docs.map(d => ({ id:d.id, ...d.data() })));
-    });
-  }
 }
 
 // ============================================================
@@ -347,7 +241,7 @@ $("laptopForm").addEventListener("submit", async e => {
       await updateDoc(doc(db,"laptops",editingLaptopId), payload);
       showToast("Laptop updated", "success");
     } else {
-      await addDoc(collection(db,"laptops"), { ...payload, status:"in_stock", sellDate:null, sellPrice:null, soldTo:null, createdAt:serverTimestamp(), createdBy:currentUser.email });
+      await addDoc(collection(db,"laptops"), { ...payload, status:"in_stock", sellDate:null, sellPrice:null, soldTo:null, createdAt:serverTimestamp(), createdBy:"system" });
       showToast("Laptop added", "success");
     }
     resetLaptopForm(); navigateTo("inventory");
@@ -384,7 +278,7 @@ $("sellForm").addEventListener("submit", async e => {
     const l = laptops.find(x=>x.id===id);
     await addDoc(collection(db,"cashEntries"), { type:"in", amount:sellPrice, date:sellDate,
       reason:`${l?l.brand+" "+l.model:"Laptop"} sold${soldTo?" — to: "+soldTo:""}`,
-      linkedLaptopId:id, createdAt:serverTimestamp(), createdBy:currentUser.email });
+      linkedLaptopId:id, createdAt:serverTimestamp(), createdBy:"system" });
     showToast("Sale confirmed","success"); closeSellModal();
   } catch(err) { showToast("Could not save sale: "+err.message,"error"); }
 });
@@ -416,7 +310,7 @@ $("cashForm").addEventListener("submit", async e => {
   e.preventDefault();
   try {
     await addDoc(collection(db,"cashEntries"), { type:$("cType").value, amount:Number($("cAmount").value)||0,
-      date:$("cDate").value, reason:$("cReason").value.trim(), createdAt:serverTimestamp(), createdBy:currentUser.email });
+      date:$("cDate").value, reason:$("cReason").value.trim(), createdAt:serverTimestamp(), createdBy:"system" });
     $("cashForm").reset(); $("cDate").value=todayStr();
     showToast("Cash entry added","success");
   } catch(err) { showToast("Could not save: "+err.message,"error"); }
@@ -497,64 +391,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const mi = $("soldMonthFilter"); if (mi) { mi.value=ms; soldMonthFilter=ms; }
   $("soldMonthFilter")?.addEventListener("change", e => { soldMonthFilter=e.target.value; renderSoldHistory(); });
   $("soldClearFilter")?.addEventListener("click", () => { soldMonthFilter=""; if($("soldMonthFilter")) $("soldMonthFilter").value=""; renderSoldHistory(); });
-});
-
-// ============================================================
-// USERS (admin) — Add user directly
-// ============================================================
-function renderUsers(users) {
-  const list = $("approvedUsersList");
-  list.innerHTML = users.length===0 ? '<p class="empty-state">No users yet</p>'
-    : users.map(u=>`<div class="list-item">
-        <div class="list-item-main">
-          <p>${escapeHtml(u.name)} ${u.id===currentUser.uid?"(you)":""}</p>
-          <p>${escapeHtml(u.email)} • ${u.role}</p>
-        </div>
-        <div class="list-item-right">
-          <span class="badge ${u.role==="admin"?"badge-in":"badge-sold"}">${u.role}</span>
-          ${u.id!==currentUser.uid?`<button class="icon-btn" data-del-user="${u.id}"><i class="ti ti-trash"></i></button>`:""}
-        </div>
-      </div>`).join("");
-  list.querySelectorAll("[data-del-user]").forEach(b=>b.addEventListener("click",()=>deleteUser(b.dataset.delUser)));
-}
-
-async function deleteUser(uid) {
-  if (!confirm("Remove this user's access?")) return;
-  try { await deleteDoc(doc(db,"users",uid)); showToast("User removed","success"); }
-  catch(err) { showToast("Could not remove: "+err.message,"error"); }
-}
-
-// Add user modal
-$("addUserBtn")?.addEventListener("click", () => { $("addUserModalOverlay").classList.remove("hidden"); });
-$("addUserModalClose")?.addEventListener("click", () => $("addUserModalOverlay").classList.add("hidden"));
-$("addUserCancelBtn")?.addEventListener("click", () => $("addUserModalOverlay").classList.add("hidden"));
-
-$("addUserForm")?.addEventListener("submit", async e => {
-  e.preventDefault();
-  const name=$("newUserName").value.trim(), email=$("newUserEmail").value.trim(),
-        password=$("newUserPassword").value, role=$("newUserRole").value;
-  const btn=$("addUserSubmitBtn"), errEl=$("addUserError");
-  errEl.classList.add("hidden"); btn.disabled=true;
-  try {
-    // Create Firebase Auth user
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    // Save to Firestore
-    await setDoc(doc(db,"users",cred.user.uid), { name, email, role, status:"approved", createdAt:serverTimestamp(), createdBy:currentUser.email });
-    showToast(`User "${name}" created successfully`,"success");
-    $("addUserForm").reset();
-    $("addUserModalOverlay").classList.add("hidden");
-    // Re-login admin (creating another user signs them in)
-    // We handle this by re-signing in admin
-    await signInWithEmailAndPassword(auth, currentUser.email, "").catch(()=>{});
-  } catch(err) {
-    errEl.textContent = err.code==="auth/email-already-in-use"
-      ? "This email is already registered."
-      : err.code==="auth/weak-password"
-      ? "Password must be at least 6 characters."
-      : "Could not create user: "+err.message;
-    errEl.classList.remove("hidden");
-  }
-  btn.disabled=false;
 });
 
 // ============================================================
