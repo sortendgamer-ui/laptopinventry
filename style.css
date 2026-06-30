@@ -735,3 +735,133 @@ body::before {
 /* Safe area */
 .sidebar     { padding-top: env(safe-area-inset-top, 0px); }
 .bottom-nav  { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* ============================================================
+   LAPTOP PHOTO THUMBNAILS (Inventory / Dashboard / Sold History)
+   ============================================================ */
+.laptop-thumb {
+  width: 46px; height: 46px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+.laptop-thumb-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.04);
+  color: var(--text-3);
+  font-size: 20px;
+}
+.list-item-photo { flex-shrink: 0; }
+.list-item { gap: 12px; }
+.row-with-photo { display: flex; align-items: center; gap: 10px; }
+.row-with-photo .laptop-thumb { width: 38px; height: 38px; }
+tr:hover .laptop-thumb { transform: scale(1.12) rotate(-2deg); }
+
+/* ============================================================
+   PHOTO UPLOAD PANEL — 3D PREVIEW
+   ============================================================ */
+.photo-panel {
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(139,92,246,0.04));
+  border: 1px solid rgba(59,130,246,0.2);
+}
+.photo-panel .scan-title { color: #93C5FD; }
+
+.photo-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 28px 16px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,0.02);
+}
+.photo-empty i { font-size: 38px; color: var(--text-3); }
+.photo-empty p { font-size: 13.5px; color: var(--text-2); margin-bottom: 4px; }
+
+.photo-preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+/* The signature 3D laptop photo card */
+.photo-preview-3d {
+  width: 100%; max-width: 280px;
+  aspect-ratio: 4/3;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(145deg, #0F1629, #060B18);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 20px 50px rgba(0,0,0,0.5),
+    0 1px 0 rgba(255,255,255,0.08) inset,
+    0 0 0 1px rgba(255,255,255,0.03);
+  transform: perspective(800px) rotateX(4deg);
+  transition: transform .3s ease;
+}
+.photo-preview-3d:hover { transform: perspective(800px) rotateX(0deg) scale(1.02); }
+.photo-preview-3d img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.photo-preview-3d::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg, rgba(255,255,255,0.12) 0%, transparent 35%, transparent 70%, rgba(0,0,0,0.25) 100%);
+  pointer-events: none;
+}
+.photo-preview-actions { display: flex; gap: 10px; }
+
+/* ============================================================
+   SIDEBAR FOOTER TEXT (after removing user chip)
+   ============================================================ */
+.sidebar-footer-text {
+  font-size: 11.5px; color: var(--text-3);
+  text-align: center; padding: 8px;
+}
+
+/* ============================================================
+   GLOBAL 3D ENHANCEMENTS
+   ============================================================ */
+
+/* Sidebar gets subtle 3D depth */
+.sidebar {
+  box-shadow: 8px 0 32px rgba(0,0,0,0.4);
+}
+
+/* Brand icon 3D tilt */
+.brand-icon {
+  transform: perspective(200px) rotateY(-8deg);
+  transition: transform .3s;
+}
+.sidebar:hover .brand-icon { transform: perspective(200px) rotateY(0deg); }
+
+/* Buttons get pressed 3D effect */
+.btn-primary {
+  transform: translateY(0);
+}
+.btn-primary:active { transform: translateY(2px) scale(0.97); box-shadow: 0 2px 8px rgba(245,158,11,0.3) !important; }
+
+/* Stat icons 3D depth */
+.stat-icon {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.1) inset;
+  transform: perspective(200px) rotateX(5deg);
+}
+.stat-card:hover .stat-icon { transform: perspective(200px) rotateX(0deg) scale(1.08); }
+
+/* Modal 3D depth on open */
+.modal {
+  box-shadow: 0 -24px 64px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05) inset;
+}
+
+/* Table rows subtle lift */
+.data-table tr { transition: background .15s; }
+
+/* Scan panel 3D border glow pulse */
+.scan-panel { animation: scanGlow 3s ease-in-out infinite; }
+@keyframes scanGlow {
+  0%,100% { box-shadow: 0 0 0 rgba(245,158,11,0); }
+  50%      { box-shadow: 0 0 24px rgba(245,158,11,0.08); }
+}
+
+@media (max-width: 680px) {
+  .photo-preview-3d { max-width: 100%; }
+}

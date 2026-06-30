@@ -17,7 +17,7 @@
   <div class="loading-bar"></div>
 </div>
 
-<!-- MAIN APP -->
+<!-- MAIN APP (no login — open access) -->
 <div id="appShell" class="app-shell hidden">
 
   <aside class="sidebar" id="sidebar">
@@ -36,7 +36,9 @@
       <button class="nav-item" data-page="cashLedger"><i class="ti ti-cash"></i><span>Cash Ledger</span></button>
       <button class="nav-item" data-page="reports"><i class="ti ti-chart-bar"></i><span>Reports</span></button>
     </nav>
-    
+    <div class="sidebar-bottom">
+      <p class="sidebar-footer-text">Laptop Gallery Wholesale</p>
+    </div>
   </aside>
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -102,7 +104,6 @@
           </div>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
 
-          <!-- Barcode view -->
           <div id="barcodeView" class="barcode-view hidden">
             <div class="barcode-header">
               <span>Point at barcode or QR code</span>
@@ -113,18 +114,40 @@
             <p class="barcode-hint">Hold steady — scanning...</p>
           </div>
 
-          <!-- AI status -->
           <div id="aiScanStatus" class="ai-scan-status hidden">
             <div class="ai-scan-spinner"></div>
             <span id="aiScanText">Reading sticker with AI...</span>
           </div>
 
-          <!-- Result -->
           <div id="scanResult" class="scan-result hidden">
             <div class="scan-result-icon"><i class="ti ti-circle-check"></i></div>
             <div class="scan-result-fields" id="scanResultFields"></div>
             <button type="button" class="btn btn-ghost btn-sm" id="clearScanBtn"><i class="ti ti-refresh"></i> Scan again</button>
           </div>
+        </div>
+
+        <!-- PHOTO UPLOAD PANEL -->
+        <div class="panel photo-panel">
+          <h2 class="scan-title"><i class="ti ti-photo"></i> Laptop Photo</h2>
+          <p class="scan-desc">Add a 3D photo of the laptop — shown in inventory &amp; sold history</p>
+
+          <div id="photoEmptyState" class="photo-empty">
+            <i class="ti ti-device-laptop"></i>
+            <p>No photo added yet</p>
+            <button type="button" class="btn btn-primary btn-sm" id="addPhotoBtn"><i class="ti ti-camera-plus"></i> Add Photo</button>
+          </div>
+
+          <div id="photoPreviewWrap" class="photo-preview-wrap hidden">
+            <div class="photo-preview-3d">
+              <img id="photoPreviewImg" src="" alt="Laptop photo">
+            </div>
+            <div class="photo-preview-actions">
+              <button type="button" class="btn btn-ghost btn-sm" id="changePhotoBtn"><i class="ti ti-refresh"></i> Change</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="removePhotoBtn"><i class="ti ti-trash"></i> Remove</button>
+            </div>
+          </div>
+
+          <input type="file" id="photoInput" accept="image/*" class="hidden">
         </div>
 
         <!-- FORM -->
@@ -239,7 +262,6 @@
           </div>
         </div>
       </section>
-
 
     </main>
   </div>

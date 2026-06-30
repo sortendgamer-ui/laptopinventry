@@ -1,10 +1,10 @@
 // ============================================================
-// LAPTOP GALLERY — APP LOGIC
+// LAPTOP GALLERY — APP LOGIC (No login — open access)
 // ============================================================
 import { db } from "./firebase-config.js";
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy, serverTimestamp
+  collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot,
+  query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // ── Tabler icons CDN ──────────────────────────────────────────
@@ -22,17 +22,18 @@ document.head.appendChild(_zxScript);
 // CONSTANTS
 // ============================================================
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+const MAX_PHOTO_DIM  = 1000; // resize photos before storing (keeps Firestore doc size small)
 
 // ============================================================
 // STATE
 // ============================================================
 let laptops         = [];
-let cashEntries     = [];
-let editingLaptopId = null;
-let barcodeScanner  = null;
-let unsubLaptops    = null;
-let unsubCash       = null;
-let unsubUsers      = null;
+let cashEntries      = [];
+let editingLaptopId  = null;
+let barcodeScanner   = null;
+let unsubLaptops     = null;
+let unsubCash        = null;
+let currentPhotoData = null; // base64 data URL of laptop photo (for add/edit form)
 
 // ============================================================
 // HELPERS
@@ -56,11 +57,6 @@ function showToast(msg, type="default") {
   showToast._t = setTimeout(() => t.classList.add("hidden"), 3200);
 }
 
-function showScreen(id) {
-  ["loadingScreen","appShell"].forEach(s =>
-    $(s).classList.toggle("hidden", s !== id));
-}
-
 function inSameMonth(dateStr, month, year) {
   if (!dateStr) return false;
   const d = new Date(dateStr);
@@ -71,26 +67,27 @@ function conditionLabel(c) {
   return {new:"New", used_excellent:"Used — Excellent", used_good:"Used — Good", used_fair:"Used — Fair"}[c] || c || "";
 }
 
-// ============================================================
-// LOGIN HATA DIYA — Seedha app start hoga
-// ============================================================
-function cleanupListeners() {
-  if (unsubLaptops) { unsubLaptops(); unsubLaptops = null; }
-  if (unsubCash)    { unsubCash();    unsubCash    = null; }
-  if (unsubUsers)   { unsubUsers();   unsubUsers   = null; }
+function laptopThumb(l) {
+  if (l.photo) return `<img src="${l.photo}" class="laptop-thumb" alt="">`;
+  return `<div class="laptop-thumb laptop-thumb-placeholder"><i class="ti ti-device-laptop"></i></div>`;
 }
 
-// App seedha load karo bina login ke
-initApp();
+// ============================================================
+// APP INIT (no auth — straight to dashboard)
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+  $("loadingScreen").classList.add("hidden");
+  $("appShell").classList.remove("hidden");
+  if ($("cDate")) $("cDate").value = todayStr();
+  if ($("lBuyDate")) $("lBuyDate").value = todayStr();
 
-// ============================================================
-// INIT APP
-// ============================================================
-function initApp() {
-  showScreen("appShell");
   startListeners();
   navigateTo("dashboard");
-}
+
+  const now = new Date();
+  const ms = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+  const mi = $("soldMonthFilter"); if (mi) { mi.value = ms; soldMonthFilter = ms; }
+});
 
 function startListeners() {
   const lQ = query(collection(db,"laptops"), orderBy("buyDate","desc"));
@@ -104,7 +101,6 @@ function startListeners() {
     cashEntries = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     renderDashboard(); renderCashLedger();
   }, err => showToast("Failed to load cash: "+err.message,"error"));
-
 }
 
 // ============================================================
@@ -116,7 +112,7 @@ function navigateTo(page) {
   document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.page===page));
   document.querySelectorAll(".bnav-item").forEach(n => n.classList.toggle("active", n.dataset.page===page));
   const titles = { dashboard:"Dashboard", inventory:"Inventory", addLaptop:"Add New Laptop",
-    soldHistory:"Sold History", cashLedger:"Cash Ledger", reports:"Reports", users:"Manage Users" };
+    soldHistory:"Sold History", cashLedger:"Cash Ledger", reports:"Reports" };
   $("pageTitle").textContent = titles[page] || "Laptop Gallery";
   window.scrollTo({ top:0, behavior:"smooth" });
   closeSidebar();
@@ -130,9 +126,9 @@ document.querySelectorAll("[data-goto]").forEach(el => el.addEventListener("clic
 // Sidebar
 const openSidebar  = () => { $("sidebar").classList.add("open"); $("sidebarOverlay").classList.add("show"); };
 const closeSidebar = () => { $("sidebar").classList.remove("open"); $("sidebarOverlay").classList.remove("show"); };
-$("menuBtn").addEventListener("click", openSidebar);
-$("sidebarClose").addEventListener("click", closeSidebar);
-$("sidebarOverlay").addEventListener("click", closeSidebar);
+$("menuBtn")?.addEventListener("click", openSidebar);
+$("sidebarClose")?.addEventListener("click", closeSidebar);
+$("sidebarOverlay")?.addEventListener("click", closeSidebar);
 
 // ============================================================
 // DASHBOARD
@@ -148,6 +144,7 @@ function renderDashboard() {
   const recent = laptops.slice(0,6);
   list.innerHTML = recent.length === 0 ? '<p class="empty-state">No entries yet</p>'
     : recent.map(l => `<div class="list-item">
+        <div class="list-item-photo">${laptopThumb(l)}</div>
         <div class="list-item-main"><p>${escapeHtml(l.brand)} ${escapeHtml(l.model)}</p><p>SN: ${escapeHtml(l.serial)} • ${fmtDate(l.buyDate)}</p></div>
         <span class="badge ${l.status==='in_stock'?'badge-stock':'badge-sold'}">${l.status==='in_stock'?'In Stock':'Sold'}</span>
       </div>`).join("");
@@ -169,8 +166,8 @@ function renderInventory() {
     const profit = l.status==="sold" ? Number(l.sellPrice||0)-Number(l.buyPrice||0) : null;
     const pc = profit===null?"profit-pending":profit>=0?"profit-pos":"profit-neg";
     return `<tr>
-      <td><div class="cell-main">${escapeHtml(l.brand)} ${escapeHtml(l.model)}</div><div class="cell-sub">${conditionLabel(l.condition)}</div></td>
-      <td style="font-family:var(--font-mono);font-size:12.5px">${escapeHtml(l.serial)}</td>
+      <td><div class="row-with-photo">${laptopThumb(l)}<div><div class="cell-main">${escapeHtml(l.brand)} ${escapeHtml(l.model)}</div><div class="cell-sub">${conditionLabel(l.condition)}</div></div></div></td>
+      <td style="font-family:var(--mono);font-size:12.5px">${escapeHtml(l.serial)}</td>
       <td>${fmtDate(l.buyDate)}</td>
       <td>${fmtMoney(l.buyPrice)}</td>
       <td><span class="badge ${l.status==='in_stock'?'badge-stock':'badge-sold'}">${l.status==='in_stock'?'In Stock':'Sold'}</span></td>
@@ -189,26 +186,85 @@ function renderInventory() {
   $("inventoryTableBody").querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteLaptop(b.dataset.delete)));
 }
 
-$("inventorySearch").addEventListener("input", renderInventory);
-$("inventoryFilter").addEventListener("change", renderInventory);
+$("inventorySearch")?.addEventListener("input", renderInventory);
+$("inventoryFilter")?.addEventListener("change", renderInventory);
+
+// ============================================================
+// PHOTO UPLOAD (resize + base64, stored in Firestore doc)
+// ============================================================
+function resizeImageFile(file, maxDim = MAX_PHOTO_DIM) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxDim) { height = Math.round(height * (maxDim/width)); width = maxDim; }
+        else if (height > maxDim) { width = Math.round(width * (maxDim/height)); height = maxDim; }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.78));
+      };
+      img.onerror = () => reject(new Error("Could not load image"));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+$("addPhotoBtn")?.addEventListener("click", () => $("photoInput").click());
+$("changePhotoBtn")?.addEventListener("click", () => $("photoInput").click());
+
+$("photoInput")?.addEventListener("change", async e => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    showToast("Processing photo...");
+    currentPhotoData = await resizeImageFile(file);
+    renderPhotoPreview();
+  } catch(err) { showToast("Could not process photo: "+err.message, "error"); }
+  e.target.value = "";
+});
+
+$("removePhotoBtn")?.addEventListener("click", () => {
+  currentPhotoData = null;
+  renderPhotoPreview();
+});
+
+function renderPhotoPreview() {
+  const wrap = $("photoPreviewWrap");
+  const empty = $("photoEmptyState");
+  if (currentPhotoData) {
+    wrap.classList.remove("hidden");
+    empty.classList.add("hidden");
+    $("photoPreviewImg").src = currentPhotoData;
+  } else {
+    wrap.classList.add("hidden");
+    empty.classList.remove("hidden");
+  }
+}
 
 // ============================================================
 // ADD / EDIT LAPTOP
 // ============================================================
 function resetLaptopForm() {
   editingLaptopId = null;
+  currentPhotoData = null;
   $("laptopForm").reset();
   $("laptopId").value = "";
   $("lBuyDate").value = todayStr();
   $("laptopFormTitle").textContent = "Add New Laptop";
   $("laptopSubmitBtn").innerHTML = '<i class="ti ti-device-floppy"></i> Save';
   $("laptopCancelBtn").classList.add("hidden");
+  renderPhotoPreview();
   resetScanUI();
 }
 
 function editLaptop(id) {
   const l = laptops.find(x=>x.id===id); if (!l) return;
   editingLaptopId = id;
+  currentPhotoData = l.photo || null;
   $("laptopId").value   = id;
   $("lBrand").value     = l.brand||"";
   $("lModel").value     = l.model||"";
@@ -221,10 +277,11 @@ function editLaptop(id) {
   $("laptopFormTitle").textContent = "Edit Laptop";
   $("laptopSubmitBtn").innerHTML = '<i class="ti ti-device-floppy"></i> Update';
   $("laptopCancelBtn").classList.remove("hidden");
+  renderPhotoPreview();
   navigateTo("addLaptop");
 }
 
-$("laptopCancelBtn").addEventListener("click", () => { resetLaptopForm(); navigateTo("inventory"); });
+$("laptopCancelBtn")?.addEventListener("click", () => { resetLaptopForm(); navigateTo("inventory"); });
 
 $("laptopForm").addEventListener("submit", async e => {
   e.preventDefault();
@@ -234,14 +291,15 @@ $("laptopForm").addEventListener("submit", async e => {
     brand: $("lBrand").value.trim(), model: $("lModel").value.trim(),
     serial: $("lSerial").value.trim(), condition: $("lCondition").value,
     buyDate: $("lBuyDate").value, buyPrice: Number($("lBuyPrice").value)||0,
-    buyFrom: $("lBuyFrom").value.trim(), notes: $("lNotes").value.trim()
+    buyFrom: $("lBuyFrom").value.trim(), notes: $("lNotes").value.trim(),
+    photo: currentPhotoData || null
   };
   try {
     if (editingLaptopId) {
       await updateDoc(doc(db,"laptops",editingLaptopId), payload);
       showToast("Laptop updated", "success");
     } else {
-      await addDoc(collection(db,"laptops"), { ...payload, status:"in_stock", sellDate:null, sellPrice:null, soldTo:null, createdAt:serverTimestamp(), createdBy:"system" });
+      await addDoc(collection(db,"laptops"), { ...payload, status:"in_stock", sellDate:null, sellPrice:null, soldTo:null, createdAt:serverTimestamp() });
       showToast("Laptop added", "success");
     }
     resetLaptopForm(); navigateTo("inventory");
@@ -266,8 +324,8 @@ function openSellModal(id) {
   $("sellModalOverlay").classList.remove("hidden");
 }
 const closeSellModal = () => $("sellModalOverlay").classList.add("hidden");
-$("sellModalClose").addEventListener("click", closeSellModal);
-$("sellCancelBtn").addEventListener("click", closeSellModal);
+$("sellModalClose")?.addEventListener("click", closeSellModal);
+$("sellCancelBtn")?.addEventListener("click", closeSellModal);
 
 $("sellForm").addEventListener("submit", async e => {
   e.preventDefault();
@@ -278,7 +336,7 @@ $("sellForm").addEventListener("submit", async e => {
     const l = laptops.find(x=>x.id===id);
     await addDoc(collection(db,"cashEntries"), { type:"in", amount:sellPrice, date:sellDate,
       reason:`${l?l.brand+" "+l.model:"Laptop"} sold${soldTo?" — to: "+soldTo:""}`,
-      linkedLaptopId:id, createdAt:serverTimestamp(), createdBy:"system" });
+      linkedLaptopId:id, createdAt:serverTimestamp() });
     showToast("Sale confirmed","success"); closeSellModal();
   } catch(err) { showToast("Could not save sale: "+err.message,"error"); }
 });
@@ -286,8 +344,6 @@ $("sellForm").addEventListener("submit", async e => {
 // ============================================================
 // CASH LEDGER
 // ============================================================
-document.addEventListener("DOMContentLoaded", () => { if ($("cDate")) $("cDate").value = todayStr(); });
-
 function renderCashLedger() {
   const totalIn  = cashEntries.filter(c=>c.type==="in").reduce((s,c)=>s+Number(c.amount||0),0);
   const totalOut = cashEntries.filter(c=>c.type==="out").reduce((s,c)=>s+Number(c.amount||0),0);
@@ -306,11 +362,11 @@ function renderCashLedger() {
   list.querySelectorAll("[data-cash-del]").forEach(b=>b.addEventListener("click",()=>deleteCash(b.dataset.cashDel)));
 }
 
-$("cashForm").addEventListener("submit", async e => {
+$("cashForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   try {
     await addDoc(collection(db,"cashEntries"), { type:$("cType").value, amount:Number($("cAmount").value)||0,
-      date:$("cDate").value, reason:$("cReason").value.trim(), createdAt:serverTimestamp(), createdBy:"system" });
+      date:$("cDate").value, reason:$("cReason").value.trim(), createdAt:serverTimestamp() });
     $("cashForm").reset(); $("cDate").value=todayStr();
     showToast("Cash entry added","success");
   } catch(err) { showToast("Could not save: "+err.message,"error"); }
@@ -373,25 +429,20 @@ function renderSoldHistory() {
   tbody.innerHTML = filtered.map(l=>{
     const profit=Number(l.sellPrice||0)-Number(l.buyPrice||0);
     return `<tr>
-      <td><div class="cell-main">${escapeHtml(l.brand)} ${escapeHtml(l.model)}</div><div class="cell-sub">${conditionLabel(l.condition)}</div></td>
-      <td style="font-family:var(--font-mono);font-size:12.5px">${escapeHtml(l.serial)}</td>
+      <td><div class="row-with-photo">${laptopThumb(l)}<div><div class="cell-main">${escapeHtml(l.brand)} ${escapeHtml(l.model)}</div><div class="cell-sub">${conditionLabel(l.condition)}</div></div></div></td>
+      <td style="font-family:var(--mono);font-size:12.5px">${escapeHtml(l.serial)}</td>
       <td>${fmtDate(l.buyDate)}</td>
       <td><strong>${fmtDate(l.sellDate)}</strong></td>
       <td>${fmtMoney(l.buyPrice)}</td>
-      <td style="font-weight:700;color:var(--green-600)">${fmtMoney(l.sellPrice)}</td>
+      <td style="font-weight:700;color:#6EE7B7">${fmtMoney(l.sellPrice)}</td>
       <td class="${profit>=0?"profit-pos":"profit-neg"}">${profit>=0?"+":""}${fmtMoney(profit)}</td>
       <td>${escapeHtml(l.soldTo||"—")}</td>
     </tr>`;
   }).join("");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const now = new Date();
-  const ms = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
-  const mi = $("soldMonthFilter"); if (mi) { mi.value=ms; soldMonthFilter=ms; }
-  $("soldMonthFilter")?.addEventListener("change", e => { soldMonthFilter=e.target.value; renderSoldHistory(); });
-  $("soldClearFilter")?.addEventListener("click", () => { soldMonthFilter=""; if($("soldMonthFilter")) $("soldMonthFilter").value=""; renderSoldHistory(); });
-});
+$("soldMonthFilter")?.addEventListener("change", e => { soldMonthFilter=e.target.value; renderSoldHistory(); });
+$("soldClearFilter")?.addEventListener("click", () => { soldMonthFilter=""; if($("soldMonthFilter")) $("soldMonthFilter").value=""; renderSoldHistory(); });
 
 // ============================================================
 // SCAN — AI OCR (Camera photo → Claude API)
@@ -458,7 +509,6 @@ function applyAIScanResult(result) {
   if (brand)  $("lBrand").value  = brand;
   if (model)  $("lModel").value  = model;
   if (serial) $("lSerial").value = serial;
-  // Show result card
   $("scanResult").classList.remove("hidden");
   $("scanResultFields").innerHTML = `
     ${brand  ? `<p><strong>Brand:</strong> ${escapeHtml(brand)}</p>`:""}
@@ -490,7 +540,6 @@ async function openBarcodeScanner() {
     const video = $("barcodeVideo");
     video.srcObject = stream;
     video._stream = stream;
-    // Wait for ZXing to load
     let attempts = 0;
     const waitZXing = setInterval(() => {
       attempts++;
@@ -537,14 +586,12 @@ function stopBarcodeScanner() {
 }
 
 function applyBarcodeResult(text) {
-  // Try to detect if it's a serial number or structured data
   $("lSerial").value = text;
   $("scanResult").classList.remove("hidden");
-  $("scanResultFields").innerHTML = `<p><strong>Scanned:</strong> ${escapeHtml(text)}</p><p style="font-size:12px;color:var(--ink-soft);margin-top:4px">Filled into Serial No. field. Fill Brand &amp; Model manually if needed.</p>`;
+  $("scanResultFields").innerHTML = `<p><strong>Scanned:</strong> ${escapeHtml(text)}</p><p style="font-size:12px;color:var(--text-2);margin-top:4px">Filled into Serial No. field. Fill Brand &amp; Model manually if needed.</p>`;
   showToast("Barcode scanned — serial no. filled","success");
 }
 
-// Clear scan
 $("clearScanBtn")?.addEventListener("click", resetScanUI);
 function resetScanUI() {
   $("scanResult").classList.add("hidden");
@@ -552,4 +599,3 @@ function resetScanUI() {
   $("barcodeView").classList.add("hidden");
   stopBarcodeScanner();
 }
-
