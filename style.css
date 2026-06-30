@@ -865,3 +865,20 @@ tr:hover .laptop-thumb { transform: scale(1.12) rotate(-2deg); }
 @media (max-width: 680px) {
   .photo-preview-3d { max-width: 100%; }
 }
+
+/* ============================================================
+   SCAN MANUAL NOTE
+   ============================================================ */
+.scan-manual-note {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--text-3);
+  margin: -8px 0 18px 4px;
+}
+.scan-manual-note i { font-size: 15px; flex-shrink: 0; }
+
+/* Single scan button shouldn't stretch awkwardly wide on desktop */
+.scan-btns { justify-content: flex-start; }
+.scan-btn { flex: 0 1 260px; min-width: 220px; }
+@media (max-width: 680px) {
+  .scan-btn { flex: 1 1 100%; min-width: 0; }
+}

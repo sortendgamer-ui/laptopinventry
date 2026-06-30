@@ -96,27 +96,20 @@
 
         <!-- SCAN PANEL -->
         <div class="panel scan-panel">
-          <h2 class="scan-title"><i class="ti ti-scan"></i> Quick Scan</h2>
-          <p class="scan-desc">Scan laptop sticker with camera — AI will auto-fill Brand, Model &amp; Serial No.</p>
+          <h2 class="scan-title"><i class="ti ti-barcode"></i> Quick Scan</h2>
+          <p class="scan-desc">Scan the laptop's barcode or QR code sticker — Serial No. fills automatically.</p>
           <div class="scan-btns">
-            <button type="button" class="btn btn-primary scan-btn" id="btnCameraAI"><i class="ti ti-camera"></i> Scan Sticker (AI)</button>
-            <button type="button" class="btn btn-secondary scan-btn" id="btnBarcode"><i class="ti ti-barcode"></i> Scan Barcode / QR</button>
+            <button type="button" class="btn btn-primary scan-btn" id="btnBarcode"><i class="ti ti-barcode"></i> Scan Barcode / QR</button>
           </div>
-          <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
 
           <div id="barcodeView" class="barcode-view hidden">
             <div class="barcode-header">
               <span>Point at barcode or QR code</span>
               <button type="button" class="icon-btn" id="closeBarcodeBtn"><i class="ti ti-x"></i></button>
             </div>
-            <video id="barcodeVideo" playsinline autoplay muted></video>
+            <video id="barcodeVideo" playsinline muted></video>
             <div class="scan-line"></div>
-            <p class="barcode-hint">Hold steady — scanning...</p>
-          </div>
-
-          <div id="aiScanStatus" class="ai-scan-status hidden">
-            <div class="ai-scan-spinner"></div>
-            <span id="aiScanText">Reading sticker with AI...</span>
+            <p class="barcode-hint" id="barcodeHint">Starting camera...</p>
           </div>
 
           <div id="scanResult" class="scan-result hidden">
@@ -125,6 +118,9 @@
             <button type="button" class="btn btn-ghost btn-sm" id="clearScanBtn"><i class="ti ti-refresh"></i> Scan again</button>
           </div>
         </div>
+
+        <!-- Manual entry note -->
+        <p class="scan-manual-note"><i class="ti ti-info-circle"></i> No barcode on the laptop? Just type the Serial No. manually below.</p>
 
         <!-- PHOTO UPLOAD PANEL -->
         <div class="panel photo-panel">

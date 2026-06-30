@@ -13,10 +13,23 @@ _iconLink.rel = "stylesheet";
 _iconLink.href = "https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/tabler-icons.min.css";
 document.head.appendChild(_iconLink);
 
-// ── ZXing barcode library (CDN) ──────────────────────────────
-const _zxScript = document.createElement("script");
-_zxScript.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.1/zxing.min.js";
-document.head.appendChild(_zxScript);
+// ── ZXing barcode library (CDN, loaded as promise) ────────────
+let _zxingReady = null;
+function loadZXing() {
+  if (_zxingReady) return _zxingReady;
+  _zxingReady = new Promise((resolve, reject) => {
+    if (window.ZXing) { resolve(window.ZXing); return; }
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js";
+    script.onload = () => {
+      if (window.ZXing) resolve(window.ZXing);
+      else reject(new Error("ZXing failed to initialize"));
+    };
+    script.onerror = () => reject(new Error("Could not load barcode scanner library"));
+    document.head.appendChild(script);
+  });
+  return _zxingReady;
+}
 
 // ============================================================
 // CONSTANTS
@@ -447,141 +460,124 @@ $("soldClearFilter")?.addEventListener("click", () => { soldMonthFilter=""; if($
 // ============================================================
 // SCAN — AI OCR (Camera photo → Claude API)
 // ============================================================
-$("btnCameraAI")?.addEventListener("click", () => $("cameraInput").click());
 
-$("cameraInput")?.addEventListener("change", async e => {
-  const file = e.target.files[0]; if (!file) return;
-  showAIScanStatus("Reading sticker with AI...");
-  try {
-    const base64 = await fileToBase64(file);
-    const result = await scanWithClaude(base64, file.type);
-    applyAIScanResult(result);
-  } catch(err) {
-    hideAIScanStatus();
-    showToast("AI scan failed: "+err.message,"error");
-  }
-  e.target.value = "";
-});
-
-function fileToBase64(file) {
-  return new Promise((res,rej) => {
-    const r = new FileReader();
-    r.onload  = () => res(r.result.split(",")[1]);
-    r.onerror = () => rej(new Error("Could not read image"));
-    r.readAsDataURL(file);
-  });
-}
-
-async function scanWithClaude(base64, mediaType) {
-  const resp = await fetch(ANTHROPIC_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 300,
-      messages: [{
-        role: "user",
-        content: [
-          { type:"image", source:{ type:"base64", media_type:mediaType, data:base64 } },
-          { type:"text",  text:`This is a photo of a laptop's back sticker or service label.
-Extract ONLY these three fields:
-- brand: the laptop manufacturer (e.g. HP, Dell, Lenovo, Asus, Acer, Apple, Samsung, MSI, Toshiba)
-- model: the laptop model name/number (e.g. Pavilion 15, ThinkPad T14, Inspiron 15)
-- serial: the serial number (labeled S/N, Serial No., or similar)
-
-Respond ONLY with valid JSON, nothing else. Example:
-{"brand":"HP","model":"Pavilion 15","serial":"CND12345XY"}
-
-If a field is not visible, use empty string "".` }
-        ]
-      }]
-    })
-  });
-  if (!resp.ok) throw new Error("API error "+resp.status);
-  const data = await resp.json();
-  const text = (data.content||[]).map(b=>b.text||"").join("").trim();
-  return JSON.parse(text.replace(/```json|```/g,"").trim());
-}
-
-function applyAIScanResult(result) {
-  hideAIScanStatus();
-  const { brand="", model="", serial="" } = result;
-  if (brand)  $("lBrand").value  = brand;
-  if (model)  $("lModel").value  = model;
-  if (serial) $("lSerial").value = serial;
-  $("scanResult").classList.remove("hidden");
-  $("scanResultFields").innerHTML = `
-    ${brand  ? `<p><strong>Brand:</strong> ${escapeHtml(brand)}</p>`:""}
-    ${model  ? `<p><strong>Model:</strong> ${escapeHtml(model)}</p>`:""}
-    ${serial ? `<p><strong>Serial No.:</strong> ${escapeHtml(serial)}</p>`:""}
-    ${!brand&&!model&&!serial ? `<p>Could not detect any details. Try a clearer photo.</p>`:""}
-  `;
-  if (brand||model||serial) showToast("Details auto-filled from sticker","success");
-}
-
-function showAIScanStatus(msg) {
-  $("aiScanStatus").classList.remove("hidden");
-  $("aiScanText").textContent = msg;
-  $("scanResult").classList.add("hidden");
-}
-function hideAIScanStatus() { $("aiScanStatus").classList.add("hidden"); }
 
 // ============================================================
-// SCAN — BARCODE / QR (ZXing)
+// SCAN — BARCODE / QR (ZXing) — robust, fully self-contained
 // ============================================================
+let _videoStream = null;
+let _scanLoopId  = null;
+
 $("btnBarcode")?.addEventListener("click", openBarcodeScanner);
 $("closeBarcodeBtn")?.addEventListener("click", stopBarcodeScanner);
 
 async function openBarcodeScanner() {
-  $("barcodeView").classList.remove("hidden");
-  $("scanResult").classList.add("hidden");
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment" } });
-    const video = $("barcodeVideo");
-    video.srcObject = stream;
-    video._stream = stream;
-    let attempts = 0;
-    const waitZXing = setInterval(() => {
-      attempts++;
-      if (window.ZXing || attempts>20) {
-        clearInterval(waitZXing);
-        if (window.ZXing) startZXing(video);
-        else showToast("Barcode library not loaded. Try AI scan instead.","error");
-      }
-    }, 300);
-  } catch(err) {
-    stopBarcodeScanner();
-    showToast("Camera access denied. Please allow camera permission.","error");
+  // Basic capability checks first — give a clear reason if it can't work
+  if (!window.isSecureContext) {
+    showToast("Camera needs HTTPS. Open this site with https:// to scan.", "error");
+    return;
   }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast("Camera not supported in this browser.", "error");
+    return;
+  }
+
+  $("scanResult").classList.add("hidden");
+  $("barcodeView").classList.remove("hidden");
+  $("barcodeHint").textContent = "Starting camera...";
+
+  // Load ZXing library first (so we fail fast with a clear message if it can't load)
+  let ZX;
+  try {
+    ZX = await loadZXing();
+  } catch (err) {
+    showToast("Could not load scanner library. Check your internet connection.", "error");
+    stopBarcodeScanner();
+    return;
+  }
+
+  // Request camera — prefer rear camera, fall back to any camera
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } },
+      audio: false
+    });
+  } catch (err) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    } catch (err2) {
+      stopBarcodeScanner();
+      if (err2.name === "NotAllowedError" || err.name === "NotAllowedError") {
+        showToast("Camera permission denied. Allow camera access in browser settings.", "error");
+      } else if (err2.name === "NotFoundError" || err.name === "NotFoundError") {
+        showToast("No camera found on this device.", "error");
+      } else {
+        showToast("Could not access camera: " + (err2.message || err.message), "error");
+      }
+      return;
+    }
+  }
+
+  _videoStream = stream;
+  const video = $("barcodeVideo");
+  video.srcObject = stream;
+  video.setAttribute("playsinline", "true"); // iOS requirement
+
+  try {
+    await video.play();
+  } catch (e) { /* some browsers autoplay fine without this resolving */ }
+
+  $("barcodeHint").textContent = "Hold steady — scanning...";
+  startZXingLoop(ZX, video);
 }
 
-function startZXing(video) {
+function startZXingLoop(ZX, video) {
   try {
     const hints = new Map();
     const formats = [
-      ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.CODE_128,
-      ZXing.BarcodeFormat.CODE_39,  ZXing.BarcodeFormat.EAN_13,
-      ZXing.BarcodeFormat.DATA_MATRIX
+      ZX.BarcodeFormat.QR_CODE, ZX.BarcodeFormat.CODE_128,
+      ZX.BarcodeFormat.CODE_39,  ZX.BarcodeFormat.EAN_13,
+      ZX.BarcodeFormat.EAN_8,    ZX.BarcodeFormat.UPC_A,
+      ZX.BarcodeFormat.UPC_E,    ZX.BarcodeFormat.DATA_MATRIX,
+      ZX.BarcodeFormat.ITF,      ZX.BarcodeFormat.CODABAR
     ];
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
-    barcodeScanner = new ZXing.BrowserMultiFormatReader(hints);
-    barcodeScanner.decodeFromVideoElement(video, (result, err) => {
+    hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, formats);
+    hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+
+    const reader = new ZX.BrowserMultiFormatReader(hints);
+    barcodeScanner = reader;
+
+    // decodeFromVideoElementContinuously is most reliable across browsers
+    reader.decodeFromVideoElementContinuously(video, (result, err) => {
       if (result) {
         const text = result.getText();
-        stopBarcodeScanner();
         applyBarcodeResult(text);
+        stopBarcodeScanner();
       }
+      // NotFoundException fires continuously while no code is in frame — ignore it
+    }).catch(err => {
+      // decodeFromVideoElementContinuously itself failing to start
+      showToast("Scanner could not start: " + (err.message || "unknown error"), "error");
+      stopBarcodeScanner();
     });
-  } catch(err) {
+  } catch (err) {
+    showToast("Scanner error: " + err.message, "error");
     stopBarcodeScanner();
-    showToast("Barcode scanner error. Try AI scan instead.","error");
   }
 }
 
 function stopBarcodeScanner() {
-  if (barcodeScanner) { try { barcodeScanner.reset(); } catch(e){} barcodeScanner=null; }
-  const v=$("barcodeVideo");
-  if (v&&v._stream) { v._stream.getTracks().forEach(t=>t.stop()); v._stream=null; v.srcObject=null; }
+  if (barcodeScanner) {
+    try { barcodeScanner.reset(); } catch (e) {}
+    barcodeScanner = null;
+  }
+  if (_videoStream) {
+    _videoStream.getTracks().forEach(t => t.stop());
+    _videoStream = null;
+  }
+  const v = $("barcodeVideo");
+  if (v) v.srcObject = null;
   $("barcodeView").classList.add("hidden");
 }
 
@@ -595,7 +591,9 @@ function applyBarcodeResult(text) {
 $("clearScanBtn")?.addEventListener("click", resetScanUI);
 function resetScanUI() {
   $("scanResult").classList.add("hidden");
-  $("aiScanStatus").classList.add("hidden");
   $("barcodeView").classList.add("hidden");
   stopBarcodeScanner();
 }
+
+// Stop camera if user navigates away while scanner is open
+window.addEventListener("beforeunload", stopBarcodeScanner);
