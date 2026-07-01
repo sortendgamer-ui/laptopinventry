@@ -34,7 +34,9 @@ function loadZXing() {
 // ============================================================
 // CONSTANTS
 // ============================================================
-const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+const GEMINI_API_KEY = "AQ.Ab8RN6KZNnaBkY9NIWXA0AsCigRcTf7El6qV8iGVPZlaBeh6WA";
+const GEMINI_MODEL    = "gemini-2.0-flash";
+const GEMINI_API_URL  = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 const MAX_PHOTO_DIM  = 1000; // resize photos before storing (keeps Firestore doc size small)
 
 // ============================================================
@@ -457,9 +459,164 @@ function renderSoldHistory() {
 $("soldMonthFilter")?.addEventListener("change", e => { soldMonthFilter=e.target.value; renderSoldHistory(); });
 $("soldClearFilter")?.addEventListener("click", () => { soldMonthFilter=""; if($("soldMonthFilter")) $("soldMonthFilter").value=""; renderSoldHistory(); });
 
+
 // ============================================================
-// SCAN — AI OCR (Camera photo → Claude API)
+// SCAN PANEL — TAB SWITCHING
 // ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const tabs = document.querySelectorAll(".scan-tab");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.querySelectorAll(".scan-tab-content").forEach(c => c.classList.add("hidden"));
+      const target = tab.dataset.tab === "ai" ? "aiTab" : "barcodeTab";
+      const el = document.getElementById(target);
+      if (el) el.classList.remove("hidden");
+      // Hide result when switching tabs
+      const sr = document.getElementById("scanResult");
+      if (sr) sr.classList.add("hidden");
+      // Stop barcode scanner if switching away
+      if (tab.dataset.tab === "ai") stopBarcodeScanner();
+    });
+  });
+});
+
+// ============================================================
+// SCAN — AI OCR (Camera photo → Google Gemini API)
+// ============================================================
+$("btnCameraAI")?.addEventListener("click", () => $("cameraInput").click());
+
+$("cameraInput")?.addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    showToast("Please select an image file.", "error");
+    e.target.value = "";
+    return;
+  }
+
+  $("barcodeView").classList.add("hidden");
+  $("scanResult").classList.add("hidden");
+  showAIScanStatus("Resizing photo...");
+
+  try {
+    // Resize first — keeps upload small & fast, and Gemini reads it fine at this size
+    const dataUrl = await resizeImageFile(file, 1024);
+    const base64  = dataUrl.split(",")[1];
+
+    showAIScanStatus("Reading sticker with AI...");
+    const result = await scanWithGemini(base64, "image/jpeg");
+    applyAIScanResult(result);
+  } catch (err) {
+    hideAIScanStatus();
+    showToast("AI scan failed: " + (err.message || "Unknown error"), "error");
+  }
+  e.target.value = "";
+});
+
+async function scanWithGemini(base64, mediaType) {
+  const prompt = `This is a photo of a laptop's back panel, bottom sticker, or service label.
+
+Carefully read all visible text and extract these three fields:
+- brand: the laptop manufacturer (e.g. HP, Dell, Lenovo, Asus, Acer, Apple, Samsung, MSI, Toshiba)
+- model: the laptop model name/number (e.g. Pavilion 15, ThinkPad T14, Inspiron 15 3000)
+- serial: the serial number, usually labeled "S/N", "Serial No.", "Serial Number", or just a code near a barcode
+
+Respond with ONLY a raw JSON object, no markdown, no code fences, no extra text. Example of expected output:
+{"brand":"HP","model":"Pavilion 15","serial":"5CD1234ABC"}
+
+If you cannot find a field, set it to an empty string "".`;
+
+  const body = {
+    contents: [{
+      parts: [
+        { text: prompt },
+        { inline_data: { mime_type: mediaType, data: base64 } }
+      ]
+    }],
+    generationConfig: {
+      temperature: 0.1,
+      maxOutputTokens: 200,
+      responseMimeType: "application/json"
+    }
+  };
+
+  let resp;
+  try {
+    resp = await fetch(GEMINI_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+  } catch (networkErr) {
+    throw new Error("Network error — check your internet connection.");
+  }
+
+  if (!resp.ok) {
+    let detail = "";
+    try { const errJson = await resp.json(); detail = errJson?.error?.message || ""; } catch (_) {}
+    if (resp.status === 400) throw new Error("Invalid request" + (detail ? ": " + detail : "."));
+    if (resp.status === 403) throw new Error("API key invalid or not authorized.");
+    if (resp.status === 429) throw new Error("Too many requests — wait a moment and try again.");
+    throw new Error("Gemini API error (" + resp.status + ")" + (detail ? ": " + detail : ""));
+  }
+
+  const data = await resp.json();
+  const candidate = data?.candidates?.[0];
+
+  if (!candidate) {
+    throw new Error("No response from AI. Try a clearer photo.");
+  }
+  if (candidate.finishReason === "SAFETY") {
+    throw new Error("Photo was blocked by safety filters. Try a different photo.");
+  }
+
+  const text = (candidate.content?.parts || []).map(p => p.text || "").join("").trim();
+  if (!text) throw new Error("Empty response from AI. Try again.");
+
+  let cleaned = text.replace(/```json|```/g, "").trim();
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (parseErr) {
+    throw new Error("Could not understand AI response. Try a clearer, well-lit photo.");
+  }
+
+  return {
+    brand:  String(parsed.brand  || "").trim(),
+    model:  String(parsed.model  || "").trim(),
+    serial: String(parsed.serial || "").trim()
+  };
+}
+
+function applyAIScanResult(result) {
+  hideAIScanStatus();
+  const { brand, model, serial } = result;
+  if (brand)  $("lBrand").value  = brand;
+  if (model)  $("lModel").value  = model;
+  if (serial) $("lSerial").value = serial;
+
+  $("scanResult").classList.remove("hidden");
+  $("scanResultFields").innerHTML = `
+    ${brand  ? `<p><strong>Brand:</strong> ${escapeHtml(brand)}</p>` : ""}
+    ${model  ? `<p><strong>Model:</strong> ${escapeHtml(model)}</p>` : ""}
+    ${serial ? `<p><strong>Serial No.:</strong> ${escapeHtml(serial)}</p>` : ""}
+    ${!brand && !model && !serial ? `<p>Could not detect any details. Try a clearer, well-lit photo of the sticker.</p>` : ""}
+  `;
+  if (brand || model || serial) {
+    showToast("Details auto-filled from sticker", "success");
+  } else {
+    showToast("No details detected — try a clearer photo", "error");
+  }
+}
+
+function showAIScanStatus(msg) {
+  $("aiScanStatus").classList.remove("hidden");
+  $("aiScanText").textContent = msg;
+  $("scanResult").classList.add("hidden");
+}
+function hideAIScanStatus() { $("aiScanStatus").classList.add("hidden"); }
 
 
 // ============================================================
