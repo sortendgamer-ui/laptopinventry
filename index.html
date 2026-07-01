@@ -96,81 +96,45 @@
 
         <!-- SCAN PANEL -->
         <div class="panel scan-panel">
-          <h2 class="scan-title"><i class="ti ti-scan"></i> Quick Scan — Auto Fill</h2>
-          <p class="scan-desc">Two ways to auto-fill laptop details — choose what works best</p>
-
-          <!-- Method tabs -->
-          <div class="scan-tabs">
-            <button class="scan-tab active" id="tabAI" data-tab="ai">
-              <i class="ti ti-brain"></i>
-              <span>AI Sticker Scan</span>
-              <small>Photo → auto fills Brand, Model, Serial</small>
-            </button>
-            <button class="scan-tab" id="tabBarcode" data-tab="barcode">
-              <i class="ti ti-barcode"></i>
-              <span>Barcode / QR</span>
-              <small>Live camera → auto fills Serial No.</small>
+          <div class="scan-panel-header">
+            <div>
+              <h2 class="scan-title"><i class="ti ti-scan"></i> Barcode / QR Scanner</h2>
+              <p class="scan-desc">Scan any barcode or QR on the laptop sticker — Serial No. fills instantly</p>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnBarcode">
+              <i class="ti ti-barcode"></i> Scan
             </button>
           </div>
 
-          <!-- AI SCAN TAB -->
-          <div class="scan-tab-content" id="aiTab">
-            <div class="ai-scan-instructions">
-              <div class="ai-instruction-step"><span>1</span><p>Place laptop face-down or hold it to show the sticker</p></div>
-              <div class="ai-instruction-step"><span>2</span><p>Tap button below, take a clear close-up photo of the sticker</p></div>
-              <div class="ai-instruction-step"><span>3</span><p>AI reads Brand, Model &amp; Serial No. and fills them automatically</p></div>
+          <!-- Scanner lives inside this div — Html5-QRCode injects camera here -->
+          <div id="barcodeView" class="barcode-view hidden">
+            <div class="barcode-header">
+              <span><i class="ti ti-scan"></i> Point at barcode or QR code</span>
+              <button type="button" class="icon-btn" id="closeBarcodeBtn"><i class="ti ti-x"></i></button>
             </div>
-            <button type="button" class="btn btn-primary scan-btn-full" id="btnCameraAI">
-              <i class="ti ti-camera"></i> Take Photo &amp; Auto-Fill
-            </button>
-            <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
-
-            <!-- AI Status -->
-            <div id="aiScanStatus" class="ai-scan-status hidden">
-              <div class="ai-scan-spinner"></div>
-              <div>
-                <p id="aiScanText">Reading sticker with AI...</p>
-                <p class="ai-scan-sub">This takes 3–5 seconds</p>
-              </div>
-            </div>
+            <!-- Html5-QRCode renders camera + viewfinder inside this div -->
+            <div id="barcodeRegion"></div>
+            <p class="barcode-hint" id="barcodeHint">Align barcode inside the frame...</p>
           </div>
 
-          <!-- BARCODE SCAN TAB -->
-          <div class="scan-tab-content hidden" id="barcodeTab">
-            <p class="barcode-tab-desc">Point your camera at the barcode or QR code on the laptop's sticker.</p>
-            <button type="button" class="btn btn-secondary scan-btn-full" id="btnBarcode">
-              <i class="ti ti-barcode"></i> Open Camera Scanner
-            </button>
-
-            <div id="barcodeView" class="barcode-view hidden">
-              <div class="barcode-header">
-                <span><i class="ti ti-scan"></i> Hold steady — scanning...</span>
-                <button type="button" class="icon-btn" id="closeBarcodeBtn"><i class="ti ti-x"></i></button>
-              </div>
-              <video id="barcodeVideo" playsinline muted></video>
-              <div class="scan-overlay">
-                <div class="scan-frame"></div>
-                <div class="scan-line"></div>
-              </div>
-              <p class="barcode-hint" id="barcodeHint">Align barcode inside the frame</p>
-            </div>
-          </div>
-
-          <!-- RESULT (shared by both methods) -->
+          <!-- Result -->
           <div id="scanResult" class="scan-result hidden">
             <div class="scan-result-icon"><i class="ti ti-circle-check"></i></div>
             <div>
-              <p class="scan-result-title">Fields filled!</p>
+              <p class="scan-result-title">Scanned!</p>
               <div class="scan-result-fields" id="scanResultFields"></div>
             </div>
             <button type="button" class="btn btn-ghost btn-sm" id="clearScanBtn">
               <i class="ti ti-refresh"></i> Scan again
             </button>
           </div>
+
+          <div class="scan-tips">
+            <p><i class="ti ti-bulb"></i> Tips: Good lighting, hold steady, 10–20 cm away from sticker</p>
+          </div>
         </div>
 
-        <!-- Manual entry note -->
-        <p class="scan-manual-note"><i class="ti ti-info-circle"></i> Can't scan? Fill in Brand, Model &amp; Serial No. manually below.</p>
+        <p class="scan-manual-note"><i class="ti ti-info-circle"></i> No barcode? Fill in Brand, Model &amp; Serial No. manually below.</p>
 
         <!-- PHOTO UPLOAD PANEL -->
         <div class="panel photo-panel">
